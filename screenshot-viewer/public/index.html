@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#1e1e1e">
+    <title>Screenshot Organizer</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap JS Bundle (includes Popper) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { background-color: #f0f2f5; }
+        .hero-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .stat-value { font-size: 2rem; font-weight: bold; color: #0d6efd; }
+        .stat-label { color: #6c757d; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; }
+        
+        .cat-card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            transition: transform 0.2s;
+            cursor: pointer;
+            height: 100%;
+            border: none;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        .cat-card:hover { transform: translateY(-5px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .cat-img { height: 140px; object-fit: cover; width: 100%; background: #eee; }
+        .cat-body { padding: 15px; }
+        
+        /* Gallery */
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 5px;
+        }
+        .g-item { aspect-ratio: 9/16; background: #ddd; position: relative; overflow: hidden; border-radius: 4px; }
+        .g-item img { width: 100%; height: 100%; object-fit: cover; }
+        
+        #loading { display: flex; justify-content: center; align-items: center; height: 300px; }
+    </style>
+    <link rel="manifest" href="/manifest.json">
+</head>
+<body>
+
+<nav class="navbar navbar-dark bg-primary mb-4">
+    <div class="container">
+        <span class="navbar-brand mb-0 h1">📂 Screenshot Organizer</span>
+    </div>
+</nav>
+
+<!-- Install Modal -->
+<div class="modal fade" id="installModal" tabindex="-1" aria-labelledby="installModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="installModalLabel">Install App</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p>Install this app on your home screen for quick access and a better experience!</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Later</button>
+        <button type="button" class="btn btn-primary" id="confirmInstallBtn">Install Now</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+    
+    <!-- Stats Row -->
+    <div id="stats-row" class="row g-3 mb-4">
+        <div class="col-md-3 col-6">
+            <div class="hero-card">
+                <div class="stat-value" id="total-photos">-</div>
+                <div class="stat-label">Total Photos</div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="hero-card">
+                <div class="stat-value" id="time-taken">-</div>
+                <div class="stat-label">Time Taken</div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="hero-card">
+                <div class="stat-value" id="avg-speed">-</div>
+                <div class="stat-label">Avg Speed</div>
+            </div>
+        </div>
+        <div class="col-md-3 col-12">
+            <div class="hero-card" style="padding:10px; height: 140px; display:flex; justify-content:center;">
+                <canvas id="filesChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Category Grid -->
+    <div id="dashboard-view">
+        <h4 class="mb-3 text-secondary">Categories</h4>
+        <div class="row g-3" id="category-list">
+            <!-- Cards go here -->
+        </div>
+    </div>
+
+    <!-- Detail View -->
+    <div id="gallery-view" style="display:none;">
+        <button class="btn btn-outline-secondary mb-3" onclick="showDashboard()">← Back to Dashboard</button>
+        <h2 id="gallery-title" class="mb-3">Category</h2>
+        <div class="gallery-grid" id="gallery-grid"></div>
+    </div>
+
+</div>
+
+<script>
+    let chartInstance = null;
+
+    async function loadStats() {
+        try {
+            const res = await fetch('/api/stats');
+            const data = await res.json();
+            
+            document.getElementById('total-photos').innerText = data.total_photos.toLocaleString();
+            document.getElementById('time-taken').innerText = data.time_taken;
+            document.getElementById('avg-speed').innerText = data.avg_speed;
+
+            renderChart(data.categories);
+            renderCategories(data.categories);
+        } catch (e) {
+            console.error("Error loading stats", e);
+        }
+    }
+
+    function renderChart(categories) {
+        const ctx = document.getElementById('filesChart').getContext('2d');
+        const topCats = categories.slice(0, 5); // Top 5
+        const labels = topCats.map(c => c.name);
+        const values = topCats.map(c => c.count);
+        
+        if(chartInstance) chartInstance.destroy();
+
+        chartInstance = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: values,
+                    backgroundColor: ['#0d6efd', '#6610f2', '#6f42c1', '#d63384', '#dc3545'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } }
+            }
+        });
+    }
+
+    function renderCategories(categories) {
+        const container = document.getElementById('category-list');
+        container.innerHTML = '';
+        
+        categories.forEach(cat => {
+            const div = document.createElement('div');
+            div.className = 'col-6 col-md-4 col-lg-3';
+            div.innerHTML = `
+                <div class="cat-card" onclick="openCategory('${cat.name}')">
+                    <img src="/images/${cat.name}/${cat.preview}" class="cat-img" loading="lazy">
+                    <div class="cat-body">
+                        <h5 class="card-title h6 mb-1">${cat.name}</h5>
+                        <small class="text-muted">${cat.count} photos</small>
+                    </div>
+                </div>
+            `;
+            container.appendChild(div);
+        });
+    }
+
+    async function openCategory(name) {
+        document.getElementById('dashboard-view').style.display = 'none';
+        document.getElementById('stats-row').style.display = 'none';
+        document.getElementById('gallery-view').style.display = 'block';
+        document.getElementById('gallery-title').innerText = name;
+        document.getElementById('gallery-grid').innerHTML = 'Loading...';
+
+        const res = await fetch(`/api/category/${name}`);
+        const data = await res.json();
+        
+        const grid = document.getElementById('gallery-grid');
+        grid.innerHTML = '';
+        
+        // Render first 100 images for performance
+        data.files.slice(0, 100).forEach(f => {
+            const item = document.createElement('div');
+            item.className = 'g-item';
+            item.innerHTML = `<img src="/images/${name}/${f}" loading="lazy">`;
+            item.onclick = () => window.open(`/images/${name}/${f}`, '_blank');
+            grid.appendChild(item);
+        });
+    }
+
+    function showDashboard() {
+        document.getElementById('gallery-view').style.display = 'none';
+        document.getElementById('dashboard-view').style.display = 'block';
+        document.getElementById('stats-row').style.display = 'flex';
+    }
+
+    loadStats();
+
+    // PWA Install Logic
+    let deferredPrompt;
+    let installModal;
+
+    window.addEventListener('load', () => {
+        // Initialize Modal
+        installModal = new bootstrap.Modal(document.getElementById('installModal'));
+    });
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+        // Prevent the mini-infobar from appearing on mobile
+        e.preventDefault();
+        // Stash the event so it can be triggered later.
+        deferredPrompt = e;
+        // Show the modal
+        installModal.show();
+    });
+
+    document.getElementById('confirmInstallBtn').addEventListener('click', async () => {
+        if (deferredPrompt) {
+            // Hide the modal
+            installModal.hide();
+            // Show the install prompt
+            deferredPrompt.prompt();
+            // Wait for the user to respond to the prompt
+            const { outcome } = await deferredPrompt.userChoice;
+            console.log(`User response to the install prompt: ${outcome}`);
+            deferredPrompt = null;
+        }
+    });
+
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/service-worker.js')
+                .then((reg) => console.log('Service worker registered.', reg));
+        });
+    }
+</script>
+
+</body>
+</html>
