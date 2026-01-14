@@ -1,0 +1,8 @@
+{
+  "track_id": "pwa_bg_proc_20260114",
+  "type": "feature",
+  "status": "new",
+  "created_at": "2026-01-14T10:00:00Z",
+  "updated_at": "2026-01-14T10:00:00Z",
+  "description": "Implement PWA features for the Viewer and Background Processing for the Sorting Script."
+}
