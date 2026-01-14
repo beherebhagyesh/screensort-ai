@@ -2,6 +2,8 @@ import os
 import shutil
 import pytesseract
 import time
+import logging
+import sys
 from PIL import Image
 
 # Configuration
@@ -18,13 +20,26 @@ CATEGORIES = {
     "Maps_Travel": ["map", "location", "navigate", "direction", "trip", "uber", "ola", "ride"]
 }
 
+# Configure Logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[logging.StreamHandler(sys.stdout)]
+)
+
 # Ensure category directories exist
 for category in CATEGORIES:
     path = os.path.join(SOURCE_DIR, category)
-    os.makedirs(path, exist_ok=True)
+    try:
+        os.makedirs(path, exist_ok=True)
+    except OSError as e:
+        logging.error(f"Failed to create directory {path}: {e}")
 
 # Create an 'Unsorted' directory for things that don't match
-os.makedirs(os.path.join(SOURCE_DIR, "Unsorted"), exist_ok=True)
+try:
+    os.makedirs(os.path.join(SOURCE_DIR, "Unsorted"), exist_ok=True)
+except OSError as e:
+    logging.error(f"Failed to create Unsorted directory: {e}")
 
 def categorize_image(image_path):
     try:
@@ -42,20 +57,20 @@ def categorize_image(image_path):
         
         return "Unsorted"
     except Exception as e:
-        print(f"Error processing {image_path}: {e}")
+        logging.error(f"Error processing {image_path}: {e}")
         return None
 
 def process_files():
-    print("Scanning for screenshots...")
+    logging.info("Scanning for screenshots...")
     try:
         files = [f for f in os.listdir(SOURCE_DIR) if os.path.isfile(os.path.join(SOURCE_DIR, f))]
     except FileNotFoundError:
-        print(f"Source directory {SOURCE_DIR} not found.")
+        logging.error(f"Source directory {SOURCE_DIR} not found.")
         return
 
     total_files = len(files)
     if total_files > 0:
-        print(f"Found {total_files} files to process.")
+        logging.info(f"Found {total_files} files to process.")
     
     processed_count = 0
     
@@ -68,18 +83,21 @@ def process_files():
         
         if category:
             dest_dir = os.path.join(SOURCE_DIR, category)
-            shutil.move(file_path, os.path.join(dest_dir, filename))
-            # print(f"Moved {filename} to {category}")
+            try:
+                shutil.move(file_path, os.path.join(dest_dir, filename))
+                logging.info(f"Moved {filename} to {category}")
+            except Exception as e:
+                logging.error(f"Failed to move {filename} to {category}: {e}")
         
         processed_count += 1
         if processed_count % 10 == 0:
-            print(f"Processed {processed_count}/{total_files}...")
+            logging.info(f"Processed {processed_count}/{total_files}...")
 
     if processed_count > 0:
-        print(f"Batch complete. Processed {processed_count} files.")
+        logging.info(f"Batch complete. Processed {processed_count} files.")
 
 def run_continuous(interval=60):
-    print(f"Starting continuous monitoring. Checking every {interval} seconds.")
+    logging.info(f"Starting continuous monitoring. Checking every {interval} seconds.")
     while True:
         process_files()
         time.sleep(interval)
@@ -89,7 +107,7 @@ def main():
     try:
         run_continuous()
     except KeyboardInterrupt:
-        print("\nStopping screenshot organization.")
+        logging.info("Stopping screenshot organization.")
 
 if __name__ == "__main__":
     main()
