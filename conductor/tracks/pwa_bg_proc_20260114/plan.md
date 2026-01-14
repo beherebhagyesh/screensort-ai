@@ -11,10 +11,10 @@ Goal: Ensure the sorting script runs continuously and reliably in the background
 ## Phase 2: PWA Implementation
 Goal: Enable PWA features for the Express-based viewer.
 
-- [ ] Task: Create `public/manifest.json` with PWA metadata (icons, colors, display).
-- [ ] Task: Implement `public/service-worker.js` for asset caching and offline support.
-- [ ] Task: Register the Service Worker in the main HTML file.
-- [ ] Task: Update the UI to include a "Install App" prompt or ensure the browser's native prompt is correctly triggered.
+- [x] Task: Create `public/manifest.json` with PWA metadata (icons, colors, display). <!-- 33798f6 -->
+- [x] Task: Implement `public/service-worker.js` for asset caching and offline support. <!-- 33798f6 -->
+- [x] Task: Register the Service Worker in the main HTML file. <!-- 33798f6 -->
+- [x] Task: Update the UI to include a "Install App" prompt or ensure the browser's native prompt is correctly triggered. <!-- 33798f6 -->
 - [ ] Task: Conductor - User Manual Verification 'Phase 2: PWA Implementation' (Protocol in workflow.md)
 
 ## Phase 3: Visual Polish (Dark Material Design)
