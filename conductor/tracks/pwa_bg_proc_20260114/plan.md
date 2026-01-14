@@ -1,12 +1,12 @@
 # Plan: PWA and Background Processing
 
-## Phase 1: Background Processing Setup
+## Phase 1: Background Processing Setup [checkpoint: 453ad6c]
 Goal: Ensure the sorting script runs continuously and reliably in the background.
 
 - [x] Task: Update `sort_screenshots.py` to support continuous monitoring (e.g., infinite loop with configurable delay). <!-- 713ea54 -->
 - [x] Task: Implement a startup script or service configuration for Termux to ensure the background process starts on boot or environment entry. <!-- 7f5366b -->
 - [x] Task: Add logging to `sort_screenshots.py` to track processing activity. <!-- 76e42d9 -->
-- [ ] Task: Conductor - User Manual Verification 'Phase 1: Background Processing Setup' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 1: Background Processing Setup' (Protocol in workflow.md) <!-- 453ad6c -->
 
 ## Phase 2: PWA Implementation
 Goal: Enable PWA features for the Express-based viewer.
