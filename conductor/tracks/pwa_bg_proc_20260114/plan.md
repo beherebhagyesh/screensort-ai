@@ -5,7 +5,7 @@ Goal: Ensure the sorting script runs continuously and reliably in the background
 
 - [x] Task: Update `sort_screenshots.py` to support continuous monitoring (e.g., infinite loop with configurable delay). <!-- 713ea54 -->
 - [x] Task: Implement a startup script or service configuration for Termux to ensure the background process starts on boot or environment entry. <!-- 7f5366b -->
-- [ ] Task: Add logging to `sort_screenshots.py` to track processing activity.
+- [x] Task: Add logging to `sort_screenshots.py` to track processing activity. <!-- 76e42d9 -->
 - [ ] Task: Conductor - User Manual Verification 'Phase 1: Background Processing Setup' (Protocol in workflow.md)
 
 ## Phase 2: PWA Implementation
