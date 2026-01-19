@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
+const { exec } = require('child_process');
 
 const app = express();
 const PORT = 4000;
@@ -11,95 +12,49 @@ app.use(cors());
 app.use(express.static('public'));
 app.use('/images', express.static(SCREENSHOTS_DIR));
 
-// Helper to get all stats
-function getStats() {
-    let totalFiles = 0;
-    let totalSize = 0;
-    let categories = [];
-    
-    // Recent files for "Insights"
-    let recentFiles = [];
-
-    const items = fs.readdirSync(SCREENSHOTS_DIR, { withFileTypes: true });
-
-    items.forEach(item => {
-        if (item.isDirectory()) {
-            const catPath = path.join(SCREENSHOTS_DIR, item.name);
-            try {
-                const files = fs.readdirSync(catPath).filter(f => {
-                    const ext = f.toLowerCase();
-                    return ext.endsWith('.jpg') || ext.endsWith('.png') || ext.endsWith('.jpeg') || ext.endsWith('.mp4');
-                });
-                
-                if (files.length > 0) {
-                    let catSize = 0;
-                    files.forEach(f => {
-                        const filePath = path.join(catPath, f);
-                        const stats = fs.statSync(filePath);
-                        catSize += stats.size;
-                        
-                        // Collect recent files
-                        recentFiles.push({
-                            name: f,
-                            category: item.name,
-                            time: stats.mtime.getTime(),
-                            path: `/images/${item.name}/${f}`
-                        });
-                    });
-
-                    totalFiles += files.length;
-                    totalSize += catSize;
-
-                    categories.push({
-                        name: item.name,
-                        count: files.length,
-                        size: catSize,
-                        preview: files[0]
-                    });
-                }
-            } catch (e) {
-                // ignore permission errors or empty folders
+// Helper to run Python bridge
+function runBridge(command, args = []) {
+    return new Promise((resolve, reject) => {
+        // Escape args to prevent injection (basic)
+        const safeArgs = args.map(a => `"${a.replace(/"/g, '\\"')}"`).join(' ');
+        const cmd = `python3 db_bridge.py ${command} ${safeArgs}`;
+        
+        exec(cmd, { cwd: __dirname }, (error, stdout, stderr) => {
+            if (error) {
+                console.error(`Bridge error: ${error.message}`);
+                reject(error);
+                return;
             }
-        }
+            try {
+                const data = JSON.parse(stdout);
+                resolve(data);
+            } catch (e) {
+                console.error("Failed to parse bridge output:", stdout);
+                reject(e);
+            }
+        });
     });
-
-    // Sort categories by count
-    categories.sort((a, b) => b.count - a.count);
-
-    // Calculate percentages
-    categories = categories.map(cat => ({
-        ...cat,
-        percentage: totalFiles > 0 ? Math.round((cat.count / totalFiles) * 100) : 0
-    }));
-
-    // Sort recent files by time (newest first) and take top 2
-    recentFiles.sort((a, b) => b.time - a.time);
-    const insights = recentFiles.slice(0, 2).map(f => ({
-        title: "New Screenshot Detected", // Placeholder until we have OCR
-        category: f.category,
-        detail: `Found in ${f.category}`,
-        time: "Just now", // You might want to format relative time here
-        image: f.path,
-        amount: null // Placeholder
-    }));
-
-    return { totalFiles, totalSize, categories, insights };
 }
 
-app.get('/api/stats', (req, res) => {
+app.get('/api/stats', async (req, res) => {
     try {
-        const { totalFiles, totalSize, categories, insights } = getStats();
+        const stats = await runBridge('stats');
         
-        // Format size to GB or MB
-        const sizeInGB = (totalSize / (1024 * 1024 * 1024)).toFixed(2);
+        // Enrich stats with percentage if needed (can be done in JS or Python)
+        // Let's just pass it through for now
         
-        const stats = {
-            total_photos: totalFiles,
-            storage_usage: sizeInGB + " GB",
-            storage_saved: "0.5 GB", // Mocked "Optimization"
-            categories: categories,
-            insights: insights // Now dynamic based on real recent files
-        };
+        // Add hardcoded storage usage if Python didn't calculate it
+        if (stats.storage_usage === "Calculating...") {
+             stats.storage_usage = "1.2 GB"; // Placeholder
+        }
+        
+        // Calculate percentages for UI
+        if (stats.categories && stats.total_photos > 0) {
+            stats.categories = stats.categories.map(cat => ({
+                ...cat,
+                percentage: Math.round((cat.count / stats.total_photos) * 100)
+            }));
+        }
 
         res.json(stats);
     } catch (error) {
@@ -107,6 +62,47 @@ app.get('/api/stats', (req, res) => {
         res.status(500).json({ error: 'Failed to generate stats' });
     }
 });
+
+app.get('/api/search', async (req, res) => {
+    try {
+        const query = req.query.q;
+        if (!query) return res.json([]);
+        
+        const results = await runBridge('search', [query]);
+        res.json(results);
+    } catch (error) {
+        res.status(500).json({ error: 'Search failed' });
+    }
+});
+
+app.get('/api/category/:name', (req, res) => {
+    try {
+        const catName = req.params.name;
+        if (catName.includes('..')) return res.status(400).send('Invalid');
+        
+        const dir = path.join(SCREENSHOTS_DIR, catName);
+        if (!fs.existsSync(dir)) return res.status(404).send('Not found');
+
+        const files = fs.readdirSync(dir)
+            .filter(f => !f.startsWith('.'))
+            .map(f => ({
+                name: f,
+                time: fs.statSync(path.join(dir, f)).mtime.getTime()
+            }))
+            .sort((a, b) => b.time - a.time) // Newest first
+            .map(f => f.name);
+
+        res.json({ files });
+    } catch (e) {
+        res.status(500).send(e.toString());
+    }
+});
+
+if (require.main === module) {
+    app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+}
+
+module.exports = app;
 
 app.get('/api/category/:name', (req, res) => {
     try {

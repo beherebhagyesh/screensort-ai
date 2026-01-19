@@ -162,6 +162,32 @@
             </div>
         </div>
     </section>
+
+    <!-- Search Overlay -->
+    <div id="search-overlay" class="fixed inset-0 z-[60] bg-background-dark/95 backdrop-blur-xl hidden flex-col p-6 animate-fade-in">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-bold text-white">Search Vault</h2>
+            <button onclick="toggleSearch()" class="size-10 rounded-full glass flex items-center justify-center">
+                <span class="material-symbols-outlined text-white">close</span>
+            </button>
+        </div>
+        
+        <div class="relative mb-6">
+            <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-white/50">search</span>
+            <input type="text" id="search-input" oninput="handleSearch(this.value)" 
+                   class="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-white placeholder-white/40 focus:outline-none focus:border-primary/50 transition-colors"
+                   placeholder="Type 'wifi', 'receipt', '$50'...">
+        </div>
+
+        <div id="search-results" class="flex-1 overflow-y-auto space-y-3">
+            <!-- Results injected here -->
+            <div class="text-center text-white/30 mt-10">
+                <span class="material-symbols-outlined text-4xl mb-2">manage_search</span>
+                <p>Search your entire history by text or category.</p>
+            </div>
+        </div>
+    </div>
+
     <!-- iOS Bottom Navigation Bar -->
     <nav class="fixed bottom-0 w-full px-6 pb-8 pt-4 backdrop-blur-2xl bg-background-dark/80 border-t border-white/5 flex justify-between items-center z-50">
         <button class="flex flex-col items-center gap-1 group">
@@ -177,7 +203,7 @@
                 <span class="material-symbols-outlined text-white text-3xl">scan_delete</span>
             </button>
         </div>
-        <button class="flex flex-col items-center gap-1 group opacity-40">
+        <button id="nav-search-btn" onclick="toggleSearch()" class="flex flex-col items-center gap-1 group opacity-40 hover:opacity-100 transition-opacity">
             <span class="material-symbols-outlined text-white group-hover:text-primary transition-colors">search</span>
             <span class="text-[10px] font-medium text-white group-hover:text-primary transition-colors">Search</span>
         </button>
@@ -191,7 +217,65 @@
     <div class="fixed bottom-1/4 -right-20 size-64 bg-neon-purple/5 blur-[100px] rounded-full -z-10"></div>
 
     <script>
-        // Fetch and Populate Data
+        // --- Search Logic ---
+        function toggleSearch() {
+            const overlay = document.getElementById('search-overlay');
+            overlay.classList.toggle('hidden');
+            overlay.classList.toggle('flex');
+            if(!overlay.classList.contains('hidden')) {
+                document.getElementById('search-input').focus();
+            }
+        }
+
+        let searchTimeout;
+        function handleSearch(query) {
+            clearTimeout(searchTimeout);
+            const resultsDiv = document.getElementById('search-results');
+            
+            if (!query || query.length < 2) {
+                resultsDiv.innerHTML = `
+                    <div class="text-center text-white/30 mt-10">
+                        <span class="material-symbols-outlined text-4xl mb-2">manage_search</span>
+                        <p>Search your entire history by text or category.</p>
+                    </div>`;
+                return;
+            }
+
+            resultsDiv.innerHTML = '<div class="text-center text-white/50 mt-4">Searching...</div>';
+
+            searchTimeout = setTimeout(async () => {
+                try {
+                    const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
+                    const items = await res.json();
+                    
+                    if (items.length === 0) {
+                        resultsDiv.innerHTML = '<div class="text-center text-white/50 mt-10">No matches found.</div>';
+                        return;
+                    }
+
+                    resultsDiv.innerHTML = items.map(item => `
+                        <div class="glass p-3 rounded-xl flex gap-3 items-start animate-fade-in">
+                            <div class="size-16 rounded-lg bg-center bg-cover flex-shrink-0 bg-white/5" 
+                                 style="background-image: url('${item.path.replace("'", "\\'")}');"></div>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex justify-between">
+                                    <h4 class="text-white font-medium text-sm truncate">${item.category}</h4>
+                                    ${item.amount ? `<span class="text-neon-lime text-xs font-bold">$${item.amount}</span>` : ''}
+                                </div>
+                                <p class="text-white/40 text-xs mt-1 line-clamp-2">${item.text_snippet || 'No text content'}</p>
+                                <p class="text-[10px] text-white/30 mt-2">${item.filename}</p>
+                            </div>
+                        </div>
+                    `).join('');
+
+                } catch (e) {
+                    console.error(e);
+                    resultsDiv.innerHTML = '<div class="text-red-400 text-center mt-4">Search failed.</div>';
+                }
+            }, 500); // 500ms debounce
+        }
+
+        // --- Stats Logic ---
         async function fetchStats() {
             try {
                 const response = await fetch('/api/stats');
@@ -258,7 +342,7 @@
                                         <span class="text-[10px] bg-white/10 text-white/80 px-2 py-0.5 rounded-full font-bold uppercase">${item.category}</span>
                                     </div>
                                     <p class="text-xs text-white/60 mt-1">${item.detail}</p>
-                                    <p class="text-[10px] text-white/40 mt-1">${item.time}</p>
+                                    <p class="text-[10px] text-white/40 mt-1">${new Date(item.time).toLocaleTimeString()}</p>
                                 </div>
                                 <span class="material-symbols-outlined text-white/30">chevron_right</span>
                             </div>
