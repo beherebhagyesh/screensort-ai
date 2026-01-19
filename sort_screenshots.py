@@ -65,6 +65,36 @@ def extract_amount(text):
     # Keeping it strict for now to avoid false positives (like version numbers).
     return None
 
+def preprocess_image(img):
+    """
+    Apply image processing to improve OCR accuracy.
+    1. Convert to Grayscale
+    2. Upscale (helps with small text)
+    3. Increase Contrast and Sharpness
+    """
+    try:
+        # 1. Grayscale
+        img = img.convert('L')
+        
+        # 2. Upscale (2x)
+        # Resize only if image is small-ish (optional, but good for speed vs quality trade-off)
+        width, height = img.size
+        new_size = (width * 2, height * 2)
+        img = img.resize(new_size, Image.Resampling.BICUBIC)
+        
+        # 3. Enhance Contrast (makes text pop against bg)
+        enhancer = ImageEnhance.Contrast(img)
+        img = enhancer.enhance(2.0)
+        
+        # 4. Sharpen (defines edges)
+        enhancer = ImageEnhance.Sharpness(img)
+        img = enhancer.enhance(2.0)
+        
+        return img
+    except Exception as e:
+        logging.warning(f"Preprocessing failed: {e}")
+        return img # Return original if enhancement fails
+
 def categorize_image(image_path):
     try:
         # Check extension first
@@ -73,9 +103,13 @@ def categorize_image(image_path):
             return "Videos", None, None
 
         img = Image.open(image_path)
-        text = pytesseract.image_to_string(img).lower()
         
-        # Extract Amount
+        # --- NEW: Preprocess for better OCR ---
+        processed_img = preprocess_image(img)
+        
+        text = pytesseract.image_to_string(processed_img).lower()
+        
+        # Extract Amount (using the original text or processed? Processed is usually better)
         amount = extract_amount(text)
         
         # Determine Category
