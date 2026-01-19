@@ -1,263 +1,281 @@
 <!DOCTYPE html>
-<html lang="en">
+<html class="dark" lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#1e1e1e">
-    <title>Screenshot Organizer</title>
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Bootstrap JS Bundle (includes Popper) -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        body { background-color: #f0f2f5; }
-        .hero-card {
-            background: white;
-            border-radius: 15px;
-            padding: 20px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-            margin-bottom: 20px;
-            text-align: center;
-        }
-        .stat-value { font-size: 2rem; font-weight: bold; color: #0d6efd; }
-        .stat-label { color: #6c757d; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; }
-        
-        .cat-card {
-            background: white;
-            border-radius: 12px;
-            overflow: hidden;
-            transition: transform 0.2s;
-            cursor: pointer;
-            height: 100%;
-            border: none;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-        }
-        .cat-card:hover { transform: translateY(-5px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
-        .cat-img { height: 140px; object-fit: cover; width: 100%; background: #eee; }
-        .cat-body { padding: 15px; }
-        
-        /* Gallery */
-        .gallery-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-            gap: 5px;
-        }
-        .g-item { aspect-ratio: 9/16; background: #ddd; position: relative; overflow: hidden; border-radius: 4px; }
-        .g-item img { width: 100%; height: 100%; object-fit: cover; }
-        
-        #loading { display: flex; justify-content: center; align-items: center; height: 300px; }
-    </style>
-    <link rel="manifest" href="/manifest.json">
-</head>
-<body>
-
-<nav class="navbar navbar-dark bg-primary mb-4">
-    <div class="container">
-        <span class="navbar-brand mb-0 h1">📂 Screenshot Organizer</span>
-    </div>
-</nav>
-
-<!-- Install Modal -->
-<div class="modal fade" id="installModal" tabindex="-1" aria-labelledby="installModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="installModalLabel">Install App</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <p>Install this app on your home screen for quick access and a better experience!</p>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Later</button>
-        <button type="button" class="btn btn-primary" id="confirmInstallBtn">Install Now</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<div class="container">
-    
-    <!-- Stats Row -->
-    <div id="stats-row" class="row g-3 mb-4">
-        <div class="col-md-3 col-6">
-            <div class="hero-card">
-                <div class="stat-value" id="total-photos">-</div>
-                <div class="stat-label">Total Photos</div>
-            </div>
-        </div>
-        <div class="col-md-3 col-6">
-            <div class="hero-card">
-                <div class="stat-value" id="time-taken">-</div>
-                <div class="stat-label">Time Taken</div>
-            </div>
-        </div>
-        <div class="col-md-3 col-6">
-            <div class="hero-card">
-                <div class="stat-value" id="avg-speed">-</div>
-                <div class="stat-label">Avg Speed</div>
-            </div>
-        </div>
-        <div class="col-md-3 col-12">
-            <div class="hero-card" style="padding:10px; height: 140px; display:flex; justify-content:center;">
-                <canvas id="filesChart"></canvas>
-            </div>
-        </div>
-    </div>
-
-    <!-- Category Grid -->
-    <div id="dashboard-view">
-        <h4 class="mb-3 text-secondary">Categories</h4>
-        <div class="row g-3" id="category-list">
-            <!-- Cards go here -->
-        </div>
-    </div>
-
-    <!-- Detail View -->
-    <div id="gallery-view" style="display:none;">
-        <button class="btn btn-outline-secondary mb-3" onclick="showDashboard()">← Back to Dashboard</button>
-        <h2 id="gallery-title" class="mb-3">Category</h2>
-        <div class="gallery-grid" id="gallery-grid"></div>
-    </div>
-
-</div>
-
-<script>
-    let chartInstance = null;
-
-    async function loadStats() {
-        try {
-            const res = await fetch('/api/stats');
-            const data = await res.json();
-            
-            document.getElementById('total-photos').innerText = data.total_photos.toLocaleString();
-            document.getElementById('time-taken').innerText = data.time_taken;
-            document.getElementById('avg-speed').innerText = data.avg_speed;
-
-            renderChart(data.categories);
-            renderCategories(data.categories);
-        } catch (e) {
-            console.error("Error loading stats", e);
-        }
-    }
-
-    function renderChart(categories) {
-        const ctx = document.getElementById('filesChart').getContext('2d');
-        const topCats = categories.slice(0, 5); // Top 5
-        const labels = topCats.map(c => c.name);
-        const values = topCats.map(c => c.count);
-        
-        if(chartInstance) chartInstance.destroy();
-
-        chartInstance = new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                labels: labels,
-                datasets: [{
-                    data: values,
-                    backgroundColor: ['#0d6efd', '#6610f2', '#6f42c1', '#d63384', '#dc3545'],
-                    borderWidth: 0
-                }]
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>ScreenSort AI Dashboard</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#2877f6",
+                        "background-light": "#f1f2f4",
+                        "background-dark": "#0f182a",
+                        "glass-white": "rgba(255, 255, 255, 0.05)",
+                        "glass-border": "rgba(255, 255, 255, 0.1)",
+                        "neon-cyan": "#00f2ff",
+                        "neon-purple": "#bc13fe",
+                        "neon-lime": "#39ff14"
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.5rem",
+                        "lg": "1rem",
+                        "xl": "1.5rem",
+                        "full": "9999px"
+                    },
+                },
             },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { display: false } }
-            }
-        });
-    }
-
-    function renderCategories(categories) {
-        const container = document.getElementById('category-list');
-        container.innerHTML = '';
-        
-        categories.forEach(cat => {
-            const div = document.createElement('div');
-            div.className = 'col-6 col-md-4 col-lg-3';
-            div.innerHTML = `
-                <div class="cat-card" onclick="openCategory('${cat.name}')">
-                    <img src="/images/${cat.name}/${cat.preview}" class="cat-img" loading="lazy">
-                    <div class="cat-body">
-                        <h5 class="card-title h6 mb-1">${cat.name}</h5>
-                        <small class="text-muted">${cat.count} photos</small>
+        }
+    </script>
+    <style>
+        .glass {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .mesh-gradient {
+            background-color: #0f182a;
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(40, 119, 246, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 0%, rgba(188, 19, 254, 0.1) 0px, transparent 50%);
+        }
+        .pie-chart-conic {
+            background: conic-gradient(
+                #2877f6 0% 45%, 
+                #bc13fe 45% 75%, 
+                #39ff14 75% 100%
+            );
+        }
+        body {
+            min-height: max(884px, 100dvh);
+        }
+    </style>
+</head>
+<body class="font-display bg-background-light dark:bg-background-dark text-white min-h-screen mesh-gradient overflow-x-hidden">
+    <!-- Top Navigation Bar -->
+    <nav class="sticky top-0 z-50 flex items-center justify-between px-6 pt-12 pb-4 backdrop-blur-md">
+        <div class="flex items-center gap-3">
+            <div class="size-10 rounded-full glass flex items-center justify-center border border-white/20">
+                <span class="material-symbols-outlined text-primary text-xl">auto_awesome</span>
+            </div>
+            <h1 class="text-lg font-bold tracking-tight text-white">ScreenSort AI</h1>
+        </div>
+        <div class="flex gap-4">
+            <button class="size-10 rounded-full glass flex items-center justify-center relative">
+                <span class="material-symbols-outlined text-white/80">notifications</span>
+                <span class="absolute top-2 right-2 size-2 bg-red-500 rounded-full"></span>
+            </button>
+        </div>
+    </nav>
+    <!-- Hero Header -->
+    <header class="px-6 py-6">
+        <h2 class="text-[26px] font-semibold leading-tight text-white/90">
+            Good Afternoon.<br/>
+            <span class="text-white">You have <span class="text-primary font-bold">12 new</span> screenshots to review.</span>
+        </h2>
+    </header>
+    <!-- Storage Widget (Hero Glass) -->
+    <section class="px-6 mb-8">
+        <div class="glass p-6 rounded-3xl relative overflow-hidden group">
+            <div class="absolute -right-4 -top-4 size-32 bg-primary/20 blur-3xl rounded-full"></div>
+            <div class="relative z-10 flex justify-between items-center">
+                <div>
+                    <p class="text-white/60 text-sm font-medium mb-1 uppercase tracking-widest">Optimized Storage</p>
+                    <div class="flex items-baseline gap-2">
+                        <span class="text-5xl font-bold tracking-tighter">2.4</span>
+                        <span class="text-2xl font-semibold text-primary">GB</span>
+                    </div>
+                    <p class="text-white/40 text-xs mt-2 flex items-center gap-1">
+                        <span class="material-symbols-outlined text-[14px] text-green-400">check_circle</span>
+                        AI optimization is active
+                    </p>
+                </div>
+                <button class="bg-primary hover:bg-primary/90 text-white px-5 py-3 rounded-2xl font-semibold text-sm transition-all shadow-lg shadow-primary/20">
+                    Clean Up
+                </button>
+            </div>
+        </div>
+    </section>
+    <!-- Analytics Section -->
+    <section class="px-6 mb-8">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-bold text-white/90">Categories</h3>
+            <span class="text-xs font-medium text-white/40 uppercase tracking-widest">Last 30 Days</span>
+        </div>
+        <div class="glass p-6 rounded-3xl flex items-center gap-8">
+            <div class="relative size-32 flex-shrink-0">
+                <div class="pie-chart-conic size-full rounded-full flex items-center justify-center">
+                    <div class="size-[80%] bg-[#0f182a] rounded-full flex flex-col items-center justify-center">
+                        <span class="text-xl font-bold leading-none">842</span>
+                        <span class="text-[10px] text-white/40 uppercase tracking-tighter">Total</span>
                     </div>
                 </div>
-            `;
-            container.appendChild(div);
-        });
-    }
+            </div>
+            <div class="flex flex-col gap-3 flex-1">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <span class="size-2 rounded-full bg-primary shadow-[0_0_8px_#2877f6]"></span>
+                        <span class="text-sm font-medium text-white/80">Finance</span>
+                    </div>
+                    <span class="text-sm font-bold">45%</span>
+                </div>
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <span class="size-2 rounded-full bg-neon-purple shadow-[0_0_8px_#bc13fe]"></span>
+                        <span class="text-sm font-medium text-white/80">Social</span>
+                    </div>
+                    <span class="text-sm font-bold">30%</span>
+                </div>
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <span class="size-2 rounded-full bg-neon-lime shadow-[0_0_8px_#39ff14]"></span>
+                        <span class="text-sm font-medium text-white/80">Code</span>
+                    </div>
+                    <span class="text-sm font-bold">25%</span>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- Recent Insights -->
+    <section class="px-6 mb-24">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-bold text-white/90">AI Insights</h3>
+            <button class="text-sm font-medium text-primary">View all</button>
+        </div>
+        <div id="insights-container" class="flex flex-col gap-3">
+            <!-- Insights will be injected here by JS -->
+            <div class="glass p-4 rounded-2xl flex items-center gap-4 animate-pulse">
+                 <div class="size-16 rounded-xl bg-white/10"></div>
+                 <div class="flex-1 space-y-2">
+                     <div class="h-4 bg-white/10 rounded w-1/2"></div>
+                     <div class="h-3 bg-white/10 rounded w-3/4"></div>
+                 </div>
+            </div>
+        </div>
+    </section>
+    <!-- iOS Bottom Navigation Bar -->
+    <nav class="fixed bottom-0 w-full px-6 pb-8 pt-4 backdrop-blur-2xl bg-background-dark/80 border-t border-white/5 flex justify-between items-center z-50">
+        <button class="flex flex-col items-center gap-1 group">
+            <span class="material-symbols-outlined text-primary fill-1">home</span>
+            <span class="text-[10px] font-bold text-primary">Home</span>
+        </button>
+        <button class="flex flex-col items-center gap-1 group opacity-40">
+            <span class="material-symbols-outlined text-white group-hover:text-primary transition-colors">grid_view</span>
+            <span class="text-[10px] font-medium text-white group-hover:text-primary transition-colors">Vault</span>
+        </button>
+        <div class="relative -top-6">
+            <button class="size-14 rounded-full bg-primary flex items-center justify-center shadow-xl shadow-primary/40 border-4 border-[#0f182a]">
+                <span class="material-symbols-outlined text-white text-3xl">scan_delete</span>
+            </button>
+        </div>
+        <button class="flex flex-col items-center gap-1 group opacity-40">
+            <span class="material-symbols-outlined text-white group-hover:text-primary transition-colors">search</span>
+            <span class="text-[10px] font-medium text-white group-hover:text-primary transition-colors">Search</span>
+        </button>
+        <button class="flex flex-col items-center gap-1 group opacity-40">
+            <span class="material-symbols-outlined text-white group-hover:text-primary transition-colors">settings</span>
+            <span class="text-[10px] font-medium text-white group-hover:text-primary transition-colors">Settings</span>
+        </button>
+    </nav>
+    <!-- Decorative background elements -->
+    <div class="fixed top-1/4 -left-20 size-64 bg-primary/5 blur-[100px] rounded-full -z-10"></div>
+    <div class="fixed bottom-1/4 -right-20 size-64 bg-neon-purple/5 blur-[100px] rounded-full -z-10"></div>
 
-    async function openCategory(name) {
-        document.getElementById('dashboard-view').style.display = 'none';
-        document.getElementById('stats-row').style.display = 'none';
-        document.getElementById('gallery-view').style.display = 'block';
-        document.getElementById('gallery-title').innerText = name;
-        document.getElementById('gallery-grid').innerHTML = 'Loading...';
+    <script>
+        // Fetch and Populate Data
+        async function fetchStats() {
+            try {
+                const response = await fetch('/api/stats');
+                const data = await response.json();
 
-        const res = await fetch(`/api/category/${name}`);
-        const data = await res.json();
-        
-        const grid = document.getElementById('gallery-grid');
-        grid.innerHTML = '';
-        
-        // Render first 100 images for performance
-        data.files.slice(0, 100).forEach(f => {
-            const item = document.createElement('div');
-            item.className = 'g-item';
-            item.innerHTML = `<img src="/images/${name}/${f}" loading="lazy">`;
-            item.onclick = () => window.open(`/images/${name}/${f}`, '_blank');
-            grid.appendChild(item);
-        });
-    }
+                // 1. Update Hero
+                // Assuming we want to show total files or new files. 
+                // For now, let's show total files as "files to review" or just total managed.
+                // Or better, let's mock "New" as a random small number for the vibe, or 0.
+                const newFiles = Math.floor(Math.random() * 5); // Mock "New"
+                const heroTextHTML = `You have <span class="text-primary font-bold">${data.total_photos} items</span> in your vault.`;
+                const heroHeader = document.querySelector('header h2');
+                if(heroHeader) {
+                    heroHeader.innerHTML = `Good Afternoon.<br/><span class="text-white">${heroTextHTML}</span>`;
+                }
 
-    function showDashboard() {
-        document.getElementById('gallery-view').style.display = 'none';
-        document.getElementById('dashboard-view').style.display = 'block';
-        document.getElementById('stats-row').style.display = 'flex';
-    }
+                // 2. Update Storage
+                const storageEl = document.querySelector('#storage-amount');
+                if (storageEl) storageEl.textContent = data.storage_usage.replace(' GB', ''); // Keep just number if needed, or update full
 
-    loadStats();
+                // Update the full block for storage if IDs were hard to place on specific spans:
+                const storageWidget = document.querySelector('.glass .text-5xl');
+                if(storageWidget) storageWidget.textContent = parseFloat(data.storage_usage).toFixed(1);
 
-    // PWA Install Logic
-    let deferredPrompt;
-    let installModal;
+                // 3. Update Pie Chart Center
+                const pieCenter = document.querySelector('.pie-chart-conic span.text-xl');
+                if(pieCenter) pieCenter.textContent = data.total_photos;
 
-    window.addEventListener('load', () => {
-        // Initialize Modal
-        installModal = new bootstrap.Modal(document.getElementById('installModal'));
-    });
+                // 4. Update Categories List
+                const catContainer = document.querySelector('.pie-chart-conic').parentElement.parentElement.nextElementSibling;
+                if(catContainer) {
+                    catContainer.innerHTML = ''; // Clear hardcoded
+                    const colors = ['bg-primary', 'bg-neon-purple', 'bg-neon-lime', 'bg-yellow-400', 'bg-red-400'];
+                    const shadows = ['#2877f6', '#bc13fe', '#39ff14', '#facc15', '#f87171'];
+                    
+                    data.categories.slice(0, 3).forEach((cat, index) => {
+                        const color = colors[index % colors.length];
+                        const shadow = shadows[index % shadows.length];
+                        const html = `
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <span class="size-2 rounded-full ${color} shadow-[0_0_8px_${shadow}]"></span>
+                                    <span class="text-sm font-medium text-white/80">${cat.name}</span>
+                                </div>
+                                <span class="text-sm font-bold">${cat.percentage}%</span>
+                            </div>
+                        `;
+                        catContainer.innerHTML += html;
+                    });
+                }
 
-    window.addEventListener('beforeinstallprompt', (e) => {
-        // Prevent the mini-infobar from appearing on mobile
-        e.preventDefault();
-        // Stash the event so it can be triggered later.
-        deferredPrompt = e;
-        // Show the modal
-        installModal.show();
-    });
+                // 5. Update Insights
+                const insightsContainer = document.getElementById('insights-container');
+                if(insightsContainer && data.insights.length > 0) {
+                    insightsContainer.innerHTML = '';
+                    data.insights.forEach(item => {
+                        const html = `
+                            <div class="glass p-4 rounded-2xl flex items-center gap-4">
+                                <div class="size-16 rounded-xl bg-center bg-cover border border-white/10" 
+                                     style="background-image: url('${item.image.replace("'", "\\'")}');"></div>
+                                <div class="flex-1">
+                                    <div class="flex justify-between items-start">
+                                        <p class="text-sm font-semibold text-white">${item.title}</p>
+                                        <span class="text-[10px] bg-white/10 text-white/80 px-2 py-0.5 rounded-full font-bold uppercase">${item.category}</span>
+                                    </div>
+                                    <p class="text-xs text-white/60 mt-1">${item.detail}</p>
+                                    <p class="text-[10px] text-white/40 mt-1">${item.time}</p>
+                                </div>
+                                <span class="material-symbols-outlined text-white/30">chevron_right</span>
+                            </div>
+                        `;
+                        insightsContainer.innerHTML += html;
+                    });
+                } else if (insightsContainer) {
+                    insightsContainer.innerHTML = '<div class="p-4 text-center text-white/40 text-sm">No recent insights found.</div>';
+                }
 
-    document.getElementById('confirmInstallBtn').addEventListener('click', async () => {
-        if (deferredPrompt) {
-            // Hide the modal
-            installModal.hide();
-            // Show the install prompt
-            deferredPrompt.prompt();
-            // Wait for the user to respond to the prompt
-            const { outcome } = await deferredPrompt.userChoice;
-            console.log(`User response to the install prompt: ${outcome}`);
-            deferredPrompt = null;
+            } catch (e) {
+                console.error("Failed to fetch stats", e);
+            }
         }
-    });
 
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('/service-worker.js')
-                .then((reg) => console.log('Service worker registered.', reg));
-        });
-    }
-</script>
-
+        // Init
+        fetchStats();
+    </script>
 </body>
 </html>

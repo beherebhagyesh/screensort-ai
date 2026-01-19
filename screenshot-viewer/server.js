@@ -14,8 +14,12 @@ app.use('/images', express.static(SCREENSHOTS_DIR));
 // Helper to get all stats
 function getStats() {
     let totalFiles = 0;
+    let totalSize = 0;
     let categories = [];
     
+    // Recent files for "Insights"
+    let recentFiles = [];
+
     const items = fs.readdirSync(SCREENSHOTS_DIR, { withFileTypes: true });
 
     items.forEach(item => {
@@ -28,11 +32,29 @@ function getStats() {
                 });
                 
                 if (files.length > 0) {
+                    let catSize = 0;
+                    files.forEach(f => {
+                        const filePath = path.join(catPath, f);
+                        const stats = fs.statSync(filePath);
+                        catSize += stats.size;
+                        
+                        // Collect recent files
+                        recentFiles.push({
+                            name: f,
+                            category: item.name,
+                            time: stats.mtime.getTime(),
+                            path: `/images/${item.name}/${f}`
+                        });
+                    });
+
                     totalFiles += files.length;
+                    totalSize += catSize;
+
                     categories.push({
                         name: item.name,
                         count: files.length,
-                        preview: files[0] // just take the first one
+                        size: catSize,
+                        preview: files[0]
                     });
                 }
             } catch (e) {
@@ -41,26 +63,42 @@ function getStats() {
         }
     });
 
-    // Sort categories by size
+    // Sort categories by count
     categories.sort((a, b) => b.count - a.count);
 
-    return { totalFiles, categories };
+    // Calculate percentages
+    categories = categories.map(cat => ({
+        ...cat,
+        percentage: totalFiles > 0 ? Math.round((cat.count / totalFiles) * 100) : 0
+    }));
+
+    // Sort recent files by time (newest first) and take top 2
+    recentFiles.sort((a, b) => b.time - a.time);
+    const insights = recentFiles.slice(0, 2).map(f => ({
+        title: "New Screenshot Detected", // Placeholder until we have OCR
+        category: f.category,
+        detail: `Found in ${f.category}`,
+        time: "Just now", // You might want to format relative time here
+        image: f.path,
+        amount: null // Placeholder
+    }));
+
+    return { totalFiles, totalSize, categories, insights };
 }
 
 app.get('/api/stats', (req, res) => {
     try {
-        const { totalFiles, categories } = getStats();
+        const { totalFiles, totalSize, categories, insights } = getStats();
         
-        // Hardcoded "Processing" stats based on our session
-        // We know it started around 12:50 and ended 13:35 (approx 45 mins) for ~1600 files
-        // 1600 files / 2700 seconds = ~0.6 files/sec or ~1.6 sec/file ?
-        // actually 1600 files in 45 mins = 35 files per minute.
+        // Format size to GB or MB
+        const sizeInGB = (totalSize / (1024 * 1024 * 1024)).toFixed(2);
         
         const stats = {
             total_photos: totalFiles,
-            time_taken: "45 min 12 sec", // Simulated based on our logs
-            avg_speed: "0.6 sec/photo",
-            categories: categories
+            storage_usage: sizeInGB + " GB",
+            storage_saved: "0.5 GB", // Mocked "Optimization"
+            categories: categories,
+            insights: insights // Now dynamic based on real recent files
         };
 
         res.json(stats);

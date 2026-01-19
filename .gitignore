@@ -1,0 +1,13 @@
+node_modules/
+__pycache__/
+*.log
+.gemini/
+.npm/
+.npmrc
+.cache/
+.config/
+.ssh/
+storage/
+*.pyc
+server_debug.log
+sort_log.txt
