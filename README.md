@@ -15,10 +15,11 @@ Automatically moves screenshots from your main folder into context-aware categor
 *   **Code:** Snippets, errors, terminal logs.
 *   **Social:** Instagram, Twitter/X posts.
 
-### 2. 🔍 Full-Text Search (OCR)
-Don't just look at images—read them.
-*   Type "wifi password" or "flight ticket" to find the exact image instantly.
-*   Text is indexed locally in SQLite for sub-second search speeds.
+### 2. 🔍 Full-Text Search (Enhanced OCR)
+Don't just look at images—read them with high precision.
+*   **Intelligent Pipeline:** Uses a multi-stage preprocessing engine (Grayscale -> 2x Upscaling -> Contrast Boost -> Sharpening) to read text that standard OCR misses.
+*   **Deep Indexing:** Type "wifi password" or "flight ticket" to find the exact image instantly.
+*   **Fast & Local:** Text is indexed locally in SQLite for sub-second search speeds.
 
 ### 3. 📊 Insights & Analytics
 *   **Spending Tracker:** Automatically detects and sums up dollar/rupee amounts from receipt screenshots.

@@ -11,3 +11,4 @@ storage/
 *.pyc
 server_debug.log
 sort_log.txt
+screenshots.db
