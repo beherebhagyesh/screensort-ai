@@ -67,6 +67,11 @@ def extract_amount(text):
 
 def categorize_image(image_path):
     try:
+        # Check extension first
+        ext = os.path.splitext(image_path)[1].lower()
+        if ext in ['.mp4', '.mov', '.avi', '.mkv']:
+            return "Videos", None, None
+
         img = Image.open(image_path)
         text = pytesseract.image_to_string(img).lower()
         
@@ -85,7 +90,8 @@ def categorize_image(image_path):
         
         return best_category, text, amount
     except Exception as e:
-        logging.error(f"Error processing {image_path}: {e}")
+        # Log as warning, not error, to avoid panic
+        logging.warning(f"Could not process image {image_path}: {e}")
         return None, None, None
 
 def process_files(conn):
