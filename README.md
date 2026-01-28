@@ -3,7 +3,7 @@
 **ScreenSort AI** is an intelligent, privacy-first mobile application that transforms your chaotic screenshot folder into an organized, searchable vault. Running locally on your device (via Termux/Android), it uses OCR and AI categorization to sort images, extract data, and provide insights without your data ever leaving your phone.
 
 ![Status](https://img.shields.io/badge/Status-Beta-blue?style=for-the-badge)
-![Tech](https://img.shields.io/badge/Tech-Python%20%7C%20Node.js%20%7C%20SQLite-green?style=for-the-badge)
+![Tech](https://img.shields.io/badge/Tech-Python%20%7C%20Moondream2%20%7C%20SQLite-green?style=for-the-badge)
 
 ## 📱 Features
 
@@ -15,7 +15,13 @@ Automatically moves screenshots from your main folder into context-aware categor
 *   **Code:** Snippets, errors, terminal logs.
 *   **Social:** Instagram, Twitter/X posts.
 
-### 2. 🔍 Full-Text Search (Enhanced OCR)
+### 2. 🤖 AI Visual Intelligence (New!)
+Go beyond text matching with a local **Vision-Language Model (VLM)**.
+*   **Moondream2 Integration:** Uses a lightweight LLM (~3GB) to "see" images and categorize them based on visual context.
+*   **Smart Narratives:** Generates natural language descriptions of your screenshots.
+*   **Knowledge Base:** Automatically creates `smart_report.md`, turning your images into a searchable text-based repository.
+
+### 3. 🔍 Full-Text Search (Enhanced OCR)
 Don't just look at images—read them with high precision.
 *   **Intelligent Pipeline:** Uses a multi-stage preprocessing engine (Grayscale -> 2x Upscaling -> Contrast Boost -> Sharpening) to read text that standard OCR misses.
 *   **Deep Indexing:** Type "wifi password" or "flight ticket" to find the exact image instantly.
@@ -81,7 +87,15 @@ graph TD
     nohup python3 sort_screenshots.py &
     ```
 
-3.  **Launch the Viewer**
+3.  **Setup AI Analysis (Optional)**
+    To enable visual intelligence (Moondream2):
+    ```bash
+    pip install llama-cpp-python
+    python3 download_model.py
+    python3 smart_processor.py
+    ```
+
+4.  **Launch the Viewer**
     ```bash
     cd screenshot-viewer
     npm install
