@@ -12,3 +12,6 @@ storage/
 server_debug.log
 sort_log.txt
 screenshots.db
+models/
+*.gguf
+smart_report.md
