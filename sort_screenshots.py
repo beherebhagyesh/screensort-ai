@@ -9,9 +9,9 @@ import re
 import base64
 from PIL import Image, ImageEnhance
 
-# Configuration
-SOURCE_DIR = "/sdcard/Pictures/Screenshots"
-DB_FILE = "screenshots.db"
+# Configuration (can be overridden via environment variables for Docker)
+SOURCE_DIR = os.environ.get('SOURCE_DIR', "/sdcard/Pictures/Screenshots")
+DB_FILE = os.environ.get('DB_FILE', "screenshots.db")
 
 # AI Configuration
 AI_ENABLED = os.environ.get('SCREENSORT_AI', '0') == '1'

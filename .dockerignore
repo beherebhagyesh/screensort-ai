@@ -1,0 +1,48 @@
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__
+*.py[cod]
+*$py.class
+*.so
+.Python
+.pytest_cache
+*.egg-info
+
+# Virtual environments
+venv
+env
+.env
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# Local data (will be mounted as volumes)
+*.db
+screenshots.db
+models/
+knowledge_base/
+
+# Logs
+*.log
+run_log*.txt
+
+# Node (for viewer)
+node_modules
+npm-debug.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Termux/Android specific
+.termux
+.claude*
+.agents
+.cursor
+.copilot

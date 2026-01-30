@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  screensort:
+    build: .
+    container_name: screensort-ai
+    restart: unless-stopped
+    volumes:
+      # Mount your screenshots folder
+      - ${SCREENSHOTS_PATH:-./screenshots}:/screenshots
+      # Persist database
+      - screensort-db:/app
+      # Mount models (download once, reuse)
+      - screensort-models:/app/models
+    environment:
+      - SCREENSORT_AI=${SCREENSORT_AI:-1}
+      - SCREENSORT_AI_OCR=${SCREENSORT_AI_OCR:-1}
+      - SCREENSORT_VIDEO=${SCREENSORT_VIDEO:-0}
+      - SCREENSORT_TRANSLATE=${SCREENSORT_TRANSLATE:-0}
+    command: >
+      python sort_screenshots.py
+      --ai
+      --ai-ocr
+      --interval 60
+
+  # Optional: Web viewer
+  viewer:
+    build:
+      context: ./screenshot-viewer
+      dockerfile: Dockerfile.viewer
+    container_name: screensort-viewer
+    restart: unless-stopped
+    ports:
+      - "4000:4000"
+    volumes:
+      - screensort-db:/app/db:ro
+      - ${SCREENSHOTS_PATH:-./screenshots}:/screenshots:ro
+    depends_on:
+      - screensort
+
+volumes:
+  screensort-db:
+  screensort-models:
