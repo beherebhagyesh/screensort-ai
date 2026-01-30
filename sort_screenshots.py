@@ -6,12 +6,21 @@ import logging
 import sys
 import sqlite3
 import re
+import base64
 from PIL import Image, ImageEnhance
 from datetime import datetime
 
 # Configuration
 SOURCE_DIR = "/sdcard/Pictures/Screenshots"
 DB_FILE = "screenshots.db"
+
+# AI Configuration
+AI_ENABLED = os.environ.get('SCREENSORT_AI', '0') == '1'
+MODEL_PATH = "models/moondream2-text-model-f16.gguf"
+MMPROJ_PATH = "models/moondream2-mmproj-f16.gguf"
+
+# Global LLM instance (lazy loaded)
+_llm_instance = None
 
 CATEGORIES = {
     "Finance": ["bank", "pay", "rs", "transaction", "payment", "fund", "debit", "credit", "balance", "wallet", "upi", "amount", "currency", "invest"],
@@ -57,6 +66,83 @@ def init_db():
             pass  # Column already exists
     conn.commit()
     return conn
+
+def get_llm():
+    """Lazy-load the Moondream2 LLM. Returns None if AI is disabled or model unavailable."""
+    global _llm_instance
+    if not AI_ENABLED:
+        return None
+    if _llm_instance is not None:
+        return _llm_instance
+    if not os.path.exists(MODEL_PATH):
+        logging.warning(f"AI model not found at {MODEL_PATH}. Run download_model.py first.")
+        return None
+    try:
+        from llama_cpp import Llama
+        from llama_cpp.llama_chat_format import MoondreamChatHandler
+        logging.info("Loading Moondream2 Model... (This may take a moment)")
+        chat_handler = MoondreamChatHandler(clip_model_path=MMPROJ_PATH)
+        _llm_instance = Llama(
+            model_path=MODEL_PATH,
+            chat_handler=chat_handler,
+            n_ctx=2048,
+            n_gpu_layers=0,
+            verbose=False
+        )
+        logging.info("Moondream2 loaded successfully.")
+        return _llm_instance
+    except ImportError:
+        logging.warning("llama-cpp-python not installed. AI features disabled.")
+        return None
+    except Exception as e:
+        logging.error(f"Failed to load LLM: {e}")
+        return None
+
+def analyze_image_ai(image_path):
+    """Use Moondream2 to visually analyze an image. Returns (category, summary) or (None, None)."""
+    llm = get_llm()
+    if llm is None:
+        return None, None
+
+    try:
+        # Convert image to base64 data URI
+        with open(image_path, "rb") as f:
+            encoded = base64.b64encode(f.read()).decode('utf-8')
+        ext = os.path.splitext(image_path)[1].lower().replace('.', '')
+        if ext == 'jpg':
+            ext = 'jpeg'
+        data_uri = f"data:image/{ext};base64,{encoded}"
+
+        # Categories match CATEGORIES dict keys
+        valid_cats = list(CATEGORIES.keys()) + ["Unsorted"]
+        cat_list = ", ".join(valid_cats)
+
+        messages = [
+            {"role": "system", "content": "You are a helpful assistant that categorizes and describes screenshots."},
+            {"role": "user", "content": [
+                {"type": "image_url", "image_url": {"url": data_uri}},
+                {"type": "text", "text": f"Analyze this image. First, provide a single word Category from this list: [{cat_list}]. Then, provide a one-sentence summary of the content. Format: 'Category: <Category> | Summary: <Summary>'"}
+            ]}
+        ]
+
+        response = llm.create_chat_completion(messages=messages, max_tokens=100)
+        content = response["choices"][0]["message"]["content"]
+
+        # Parse response
+        if "Category:" in content:
+            category = content.split("Category:")[1].split("|")[0].strip()
+            # Validate category
+            if category not in valid_cats:
+                category = "Unsorted"
+            summary = content.split("Summary:")[1].strip() if "Summary:" in content else content
+        else:
+            category = "Unsorted"
+            summary = content
+
+        return category, summary
+    except Exception as e:
+        logging.error(f"AI analysis failed for {image_path}: {e}")
+        return None, None
 
 def extract_amount(text):
     """Find the first dollar or rupee amount in the text."""
@@ -170,36 +256,50 @@ def process_files(conn):
                 continue
 
             logging.info(f"Processing new file: {filename}")
-            
-            # Process
+
+            # OCR-based categorization
             category, text, amount = categorize_image(file_path)
-            
+
+            # AI-based categorization (if enabled)
+            ai_category, ai_summary = None, None
+            if AI_ENABLED and category != "Videos":
+                logging.info(f"Running AI analysis on {filename}...")
+                ai_category, ai_summary = analyze_image_ai(file_path)
+                if ai_category:
+                    logging.info(f"AI categorized as: {ai_category}")
+
             if category:
+                # Use AI category if OCR couldn't determine (Unsorted) and AI succeeded
+                effective_category = category
+                if category == "Unsorted" and ai_category and ai_category != "Unsorted":
+                    effective_category = ai_category
+                    logging.info(f"Using AI category: {effective_category}")
+
                 # Move logic: Only move if it's currently in the SOURCE_DIR root
-                # If it's already in a subdir, just update the path in our record
-                
                 final_path = file_path
                 current_dir_name = os.path.basename(os.path.dirname(file_path))
-                
+
                 # If file is in root OR in 'Unsorted' but now has a better category
-                if directory == SOURCE_DIR or (current_dir_name == "Unsorted" and category != "Unsorted"):
-                     dest_dir = os.path.join(SOURCE_DIR, category)
+                if directory == SOURCE_DIR or (current_dir_name == "Unsorted" and effective_category != "Unsorted"):
+                     dest_dir = os.path.join(SOURCE_DIR, effective_category)
                      os.makedirs(dest_dir, exist_ok=True)
                      new_path = os.path.join(dest_dir, filename)
                      try:
                          shutil.move(file_path, new_path)
                          final_path = new_path
-                         logging.info(f"Moved {filename} to {category}")
+                         logging.info(f"Moved {filename} to {effective_category}")
                      except Exception as e:
                          logging.error(f"Failed to move {filename}: {e}")
-                
-                # Insert into DB
+
+                # Insert into DB (including AI fields)
                 try:
                     created_at = int(os.path.getmtime(final_path) * 1000)
-                    cursor.execute('''INSERT INTO screenshots 
-                        (filename, path, category, text, amount, created_at, processed_at) 
-                        VALUES (?, ?, ?, ?, ?, ?, ?)''', 
-                        (filename, final_path, category, text, amount, created_at, int(time.time() * 1000)))
+                    now_ms = int(time.time() * 1000)
+                    cursor.execute('''INSERT INTO screenshots
+                        (filename, path, category, text, amount, created_at, processed_at, ai_category, ai_summary, ai_processed_at)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
+                        (filename, final_path, effective_category, text, amount, created_at, now_ms,
+                         ai_category, ai_summary, now_ms if ai_category else None))
                     conn.commit()
                     files_processed_count += 1
                 except Exception as e:
@@ -208,16 +308,53 @@ def process_files(conn):
     if files_processed_count > 0:
         logging.info(f"Batch complete. Indexed {files_processed_count} files.")
 
+def process_ai_backfill(conn, limit=10):
+    """Process existing DB entries that don't have AI analysis yet."""
+    if not AI_ENABLED:
+        return
+    cursor = conn.cursor()
+    cursor.execute('''SELECT id, filename, path FROM screenshots
+                      WHERE ai_processed_at IS NULL AND category != 'Videos'
+                      LIMIT ?''', (limit,))
+    rows = cursor.fetchall()
+    if not rows:
+        return
+
+    logging.info(f"AI backfill: {len(rows)} files to process")
+    for row_id, filename, path in rows:
+        if not os.path.exists(path):
+            logging.warning(f"File missing for backfill: {path}")
+            continue
+        logging.info(f"AI backfill: {filename}")
+        ai_category, ai_summary = analyze_image_ai(path)
+        now_ms = int(time.time() * 1000)
+        cursor.execute('''UPDATE screenshots SET ai_category=?, ai_summary=?, ai_processed_at=? WHERE id=?''',
+                       (ai_category, ai_summary, now_ms, row_id))
+        conn.commit()
+    logging.info("AI backfill batch complete.")
+
 def run_continuous(interval=60):
     conn = init_db()
-    logging.info(f"Starting Smart Indexer. Checking every {interval} seconds.")
+    ai_status = "enabled" if AI_ENABLED else "disabled"
+    logging.info(f"Starting Smart Indexer. AI: {ai_status}. Checking every {interval} seconds.")
     try:
         while True:
             process_files(conn)
+            # Run AI backfill for existing files (process a few each cycle)
+            if AI_ENABLED:
+                process_ai_backfill(conn, limit=3)
             time.sleep(interval)
     except KeyboardInterrupt:
         logging.info("Stopping...")
         conn.close()
 
 if __name__ == "__main__":
-    run_continuous()
+    import argparse
+    parser = argparse.ArgumentParser(description="Screenshot Sorter with optional AI")
+    parser.add_argument('--ai', action='store_true', help='Enable Moondream2 AI analysis')
+    parser.add_argument('--interval', type=int, default=60, help='Scan interval in seconds')
+    args = parser.parse_args()
+
+    if args.ai:
+        AI_ENABLED = True
+    run_continuous(interval=args.interval)
