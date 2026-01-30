@@ -27,7 +27,19 @@ Don't just look at images—read them with high precision.
 *   **Deep Indexing:** Type "wifi password" or "flight ticket" to find the exact image instantly.
 *   **Fast & Local:** Text is indexed locally in SQLite for sub-second search speeds.
 
-### 3. 📊 Insights & Analytics
+### 4. 🎬 Video Analysis (New!)
+Analyze screen recordings and video files frame-by-frame.
+*   **Frame Extraction:** Captures frames at configurable intervals.
+*   **Object Detection:** Identifies people, objects, and activities in each frame.
+*   **Smart Categorization:** Aggregates frame analysis to categorize the whole video.
+
+### 5. 🌍 Auto-Translation (New!)
+Automatically detect and translate text from screenshots.
+*   **Language Detection:** Identifies Tamil, Hindi, Spanish, and 50+ languages.
+*   **Auto-Translate:** Converts foreign text to English (or any target language).
+*   **Preserved Original:** Keeps original OCR text alongside translation.
+
+### 6. 📊 Insights & Analytics
 *   **Spending Tracker:** Automatically detects and sums up dollar/rupee amounts from receipt screenshots.
 *   **Visual Dashboard:** View storage usage, category breakdowns, and recent activity.
 
@@ -87,16 +99,27 @@ graph TD
     # Basic OCR-only mode
     nohup python3 sort_screenshots.py &
 
-    # With AI visual analysis (recommended)
+    # With AI visual analysis
     nohup python3 sort_screenshots.py --ai &
+
+    # Full features: AI + Video + Translation
+    nohup python3 sort_screenshots.py --ai --video --translate &
+
+    # Custom translation target (e.g., Tamil to Hindi)
+    python3 sort_screenshots.py --ai --translate --target-lang hi
     ```
 
-3.  **Setup AI Analysis (Optional but Recommended)**
-    To enable visual intelligence (Moondream2):
+3.  **Setup AI & Video Analysis (Optional but Recommended)**
     ```bash
+    # AI visual analysis
     pip install llama-cpp-python
     python3 download_model.py
-    # Then run with --ai flag (see step 2)
+
+    # Video frame extraction
+    pip install opencv-python
+
+    # Auto-translation
+    pip install langdetect googletrans==4.0.0-rc1
     ```
     The AI will automatically backfill analysis for existing screenshots.
 
