@@ -1,0 +1,63 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install flake8 pytest
+          pip install -r requirements.txt || true
+
+      - name: Lint with flake8
+        run: |
+          flake8 sort_screenshots.py --max-line-length=120 --ignore=E501,W503
+
+      - name: Check syntax
+        run: |
+          python -m py_compile sort_screenshots.py
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install pytest Pillow
+          pip install -r requirements.txt || true
+
+      - name: Run tests
+        run: |
+          pytest test_sort_screenshots.py -v
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: |
+          docker build -t screensort-ai:test .
+
+      - name: Verify Docker image
+        run: |
+          docker run --rm screensort-ai:test python -c "import sort_screenshots; print('OK')"
