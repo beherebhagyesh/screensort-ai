@@ -44,8 +44,17 @@ def init_db():
         text TEXT,
         amount REAL,
         created_at INTEGER,
-        processed_at INTEGER
+        processed_at INTEGER,
+        ai_category TEXT,
+        ai_summary TEXT,
+        ai_processed_at INTEGER
     )''')
+    # Add new columns to existing tables (migration for existing DBs)
+    for col, coltype in [('ai_category', 'TEXT'), ('ai_summary', 'TEXT'), ('ai_processed_at', 'INTEGER')]:
+        try:
+            c.execute(f'ALTER TABLE screenshots ADD COLUMN {col} {coltype}')
+        except sqlite3.OperationalError:
+            pass  # Column already exists
     conn.commit()
     return conn
 
