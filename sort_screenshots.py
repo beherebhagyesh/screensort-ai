@@ -17,12 +17,12 @@ CATEGORIES = {
     "Finance": ["bank", "pay", "rs", "transaction", "payment", "fund", "debit", "credit", "balance", "wallet", "upi", "amount", "currency", "invest"],
     "Chats": ["message", "typing", "online", "last seen", "whatsapp", "telegram", "chat", "dm", "reply", "sent"],
     "Shopping": ["cart", "order", "buy", "price", "discount", "offer", "delivery", "amazon", "flipkart", "myntra", "shop"],
-    "Code_Tech": ["error", "bug", "code", "exception", "console", "terminal", "debug", "java", "python", "function", "class", "import", "const", "var"],
-    "Social_Media": ["post", "like", "comment", "share", "instagram", "facebook", "twitter", "meme", "video", "reel", "story", "feed"],
+    "Code": ["error", "bug", "code", "exception", "console", "terminal", "debug", "java", "python", "function", "class", "import", "const", "var"],
+    "Social": ["post", "like", "comment", "share", "instagram", "facebook", "twitter", "meme", "video", "reel", "story", "feed"],
     "System": ["settings", "battery", "wifi", "bluetooth", "about device", "storage", "update", "notification"],
     "Events": ["ticket", "booking", "movie", "show", "date", "venue", "stadium", "concert", "event"],
     "Food": ["cook", "recipe", "ingredients", "food", "meal", "dish", "restaurant", "menu"],
-    "Maps_Travel": ["map", "location", "navigate", "direction", "trip", "uber", "ola", "ride"]
+    "Travel": ["map", "location", "navigate", "direction", "trip", "uber", "ola", "ride"]
 }
 
 # Configure Logging

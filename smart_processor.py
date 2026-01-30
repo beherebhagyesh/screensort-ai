@@ -64,12 +64,12 @@ def analyze_image(llm, image_path):
     try:
         data_uri = image_to_base64_data_uri(image_path)
         
-        # Focused prompt for categorization
+        # Focused prompt for categorization - categories match sort_screenshots.py
         messages = [
             {"role": "system", "content": "You are a helpful assistant that categorizes and describes screenshots."},
             {"role": "user", "content": [
                 {"type": "image_url", "image_url": {"url": data_uri}},
-                {"type": "text", "text": "Analyze this image. First, provide a single word Category from this list: [Finance, Chats, Shopping, Code, Social, System, Events, Food, Travel, Other]. Then, provide a one-sentence summary of the content. Format: 'Category: <Category> | Summary: <Summary>'"}
+                {"type": "text", "text": "Analyze this image. First, provide a single word Category from this list: [Finance, Chats, Shopping, Code, Social, System, Events, Food, Travel, Unsorted]. Then, provide a one-sentence summary of the content. Format: 'Category: <Category> | Summary: <Summary>'"}
             ]}
         ]
         
