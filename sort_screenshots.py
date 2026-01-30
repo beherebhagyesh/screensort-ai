@@ -6,7 +6,7 @@ import logging
 import sys
 import sqlite3
 import re
-from PIL import Image
+from PIL import Image, ImageEnhance
 from datetime import datetime
 
 # Configuration
@@ -51,18 +51,16 @@ def init_db():
 
 def extract_amount(text):
     """Find the first dollar or rupee amount in the text."""
-    # Matches $10.99, $ 10.99, Rs 500, etc.
-    match = re.search(r'[\$£€]|Rs\.?\s*(\d{1,3}(?:,\d{3})*(?:\.\d{2})?)', text, re.IGNORECASE)
+    # Matches $10.99, £50, €100, Rs 500, ₹1,000.50, etc.
+    # Uses non-capturing group for currency prefix, captures number in group(1)
+    match = re.search(r'(?:[\$£€₹]\s*|Rs\.?\s*)(\d{1,3}(?:,\d{3})*(?:\.\d{1,2})?)', text, re.IGNORECASE)
     if match:
         try:
             # Clean up the number string (remove commas)
             num_str = match.group(1).replace(',', '')
             return float(num_str)
-        except:
+        except (AttributeError, ValueError):
             return None
-    
-    # Fallback for simple numbers with decimals if currency symbol is missed but context implies it? 
-    # Keeping it strict for now to avoid false positives (like version numbers).
     return None
 
 def preprocess_image(img):
