@@ -84,16 +84,21 @@ graph TD
 2.  **Start the Background Service**
     This will begin organizing your existing screenshots immediately.
     ```bash
+    # Basic OCR-only mode
     nohup python3 sort_screenshots.py &
+
+    # With AI visual analysis (recommended)
+    nohup python3 sort_screenshots.py --ai &
     ```
 
-3.  **Setup AI Analysis (Optional)**
+3.  **Setup AI Analysis (Optional but Recommended)**
     To enable visual intelligence (Moondream2):
     ```bash
     pip install llama-cpp-python
     python3 download_model.py
-    python3 smart_processor.py
+    # Then run with --ai flag (see step 2)
     ```
+    The AI will automatically backfill analysis for existing screenshots.
 
 4.  **Launch the Viewer**
     ```bash

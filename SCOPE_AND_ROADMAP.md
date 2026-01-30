@@ -6,13 +6,19 @@
 3.  **AI Integration (Beta):** `smart_processor.py` successfully utilizes **Moondream2** (local VLM) to visually categorize images and **Tesseract** to extract text.
 4.  **Documentation:** Release notes, README with AI setup, and technical architecture.
 
+## ✅ Recently Completed
+1.  **Full Pipeline Integration:**
+    *   AI analysis merged into `sort_screenshots.py` - run with `--ai` flag
+    *   Automatic backfill for existing screenshots
+    *   AI results stored in SQLite database (ai_category, ai_summary)
+2.  **Bug Fixes:**
+    *   Fixed amount extraction regex (now captures $, £, €, ₹, Rs)
+    *   Normalized category names across OCR and AI systems
+
 ## 🚧 Discussed & Pending (To-Do)
-1.  **Full Pipeline Integration:** 
-    *   *Current State:* `smart_processor.py` is a standalone script.
-    *   *Goal:* Merge AI analysis into the main `sort_screenshots.py` loop so every *new* screenshot is automatically analyzed by Moondream2 without manual intervention.
-2.  **Structured Knowledge Base:**
-    *   *Current State:* Generates a single `smart_report.md`.
-    *   *Goal:* Create a dedicated `knowledge_base/` folder with separate files (e.g., `Finance.md`, `Recipes.md`) effectively treating your screenshot collection as a personal wiki.
+1.  **Structured Knowledge Base:**
+    *   *Current State:* AI summaries stored in database.
+    *   *Goal:* Export to dedicated `knowledge_base/` folder with separate markdown files.
 
 ## 🔮 Ancillary Features (New Requests)
 1.  **Multi-Source Scanning:**
