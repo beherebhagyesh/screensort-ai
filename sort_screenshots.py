@@ -28,6 +28,9 @@ VIDEO_MAX_FRAMES = 10     # Maximum frames to analyze per video
 TRANSLATION_ENABLED = os.environ.get('SCREENSORT_TRANSLATE', '0') == '1'
 TARGET_LANGUAGE = 'en'  # Default target language
 
+# AI OCR Configuration (use Moondream2 for text extraction instead of pytesseract)
+AI_OCR_ENABLED = os.environ.get('SCREENSORT_AI_OCR', '0') == '1'
+
 # Global LLM instance (lazy loaded)
 _llm_instance = None
 
@@ -71,7 +74,8 @@ def init_db():
     migrations = [
         ('ai_category', 'TEXT'), ('ai_summary', 'TEXT'), ('ai_processed_at', 'INTEGER'),
         ('detected_language', 'TEXT'), ('translated_text', 'TEXT'),
-        ('is_video', 'INTEGER'), ('video_frames_analyzed', 'INTEGER'), ('video_objects', 'TEXT')
+        ('is_video', 'INTEGER'), ('video_frames_analyzed', 'INTEGER'), ('video_objects', 'TEXT'),
+        ('ocr_method', 'TEXT'), ('ai_extracted_text', 'TEXT')
     ]
     for col, coltype in migrations:
         try:
@@ -157,6 +161,71 @@ def analyze_image_ai(image_path):
     except Exception as e:
         logging.error(f"AI analysis failed for {image_path}: {e}")
         return None, None
+
+def extract_text_ai(image_path):
+    """Use Moondream2 to extract text from an image. Much more accurate than pytesseract."""
+    llm = get_llm()
+    if llm is None:
+        return None
+
+    try:
+        with open(image_path, "rb") as f:
+            encoded = base64.b64encode(f.read()).decode('utf-8')
+        ext = os.path.splitext(image_path)[1].lower().replace('.', '')
+        if ext == 'jpg':
+            ext = 'jpeg'
+        data_uri = f"data:image/{ext};base64,{encoded}"
+
+        messages = [
+            {"role": "system", "content": "You are an OCR assistant. Extract and transcribe ALL visible text from images accurately."},
+            {"role": "user", "content": [
+                {"type": "image_url", "image_url": {"url": data_uri}},
+                {"type": "text", "text": "Read and transcribe ALL the text visible in this image. Include every word, number, and symbol you can see. Preserve the layout as much as possible. Be thorough and accurate."}
+            ]}
+        ]
+
+        response = llm.create_chat_completion(messages=messages, max_tokens=500)
+        content = response["choices"][0]["message"]["content"]
+        return content.strip()
+    except Exception as e:
+        logging.error(f"AI text extraction failed for {image_path}: {e}")
+        return None
+
+def extract_text_hybrid(image_path, use_ai_ocr=True):
+    """
+    Extract text using hybrid approach:
+    1. Try AI-based extraction first (more accurate)
+    2. Fall back to pytesseract if AI unavailable
+    3. Optionally combine both for best results
+    """
+    ai_text = None
+    ocr_text = None
+
+    # AI-based extraction (preferred when available)
+    if use_ai_ocr and AI_ENABLED:
+        logging.info("Using AI for text extraction...")
+        ai_text = extract_text_ai(image_path)
+        if ai_text:
+            logging.info(f"AI extracted {len(ai_text)} chars")
+
+    # Pytesseract fallback/supplement
+    try:
+        img = Image.open(image_path)
+        processed_img = preprocess_image(img)
+        ocr_text = pytesseract.image_to_string(processed_img)
+        if ocr_text:
+            logging.info(f"OCR extracted {len(ocr_text)} chars")
+    except Exception as e:
+        logging.warning(f"Pytesseract failed: {e}")
+
+    # Return AI text if available and substantial, otherwise OCR
+    if ai_text and len(ai_text) > 20:
+        return ai_text, "ai"
+    elif ocr_text:
+        return ocr_text, "ocr"
+    elif ai_text:
+        return ai_text, "ai"
+    return None, None
 
 def extract_video_frames(video_path, interval=VIDEO_FRAME_INTERVAL, max_frames=VIDEO_MAX_FRAMES):
     """Extract frames from video at regular intervals. Returns list of PIL Images."""
@@ -375,36 +444,54 @@ def is_video_file(filepath):
     ext = os.path.splitext(filepath)[1].lower()
     return ext in ['.mp4', '.mov', '.avi', '.mkv', '.webm', '.3gp']
 
-def categorize_image(image_path):
+def categorize_image(image_path, use_ai_ocr=False):
+    """
+    Categorize image using text extraction.
+    Returns: (category, text, amount, is_video, ocr_method, ai_text)
+    """
     try:
         # Check extension first
         if is_video_file(image_path):
-            return "Videos", None, None, True
+            return "Videos", None, None, True, None, None
 
-        img = Image.open(image_path)
+        text = None
+        ocr_method = None
+        ai_text = None
 
-        # --- Preprocess for better OCR ---
-        processed_img = preprocess_image(img)
+        # Use hybrid extraction if AI OCR is enabled
+        if use_ai_ocr or AI_OCR_ENABLED:
+            text, ocr_method = extract_text_hybrid(image_path, use_ai_ocr=True)
+            if ocr_method == "ai":
+                ai_text = text
+        else:
+            # Traditional pytesseract only
+            img = Image.open(image_path)
+            processed_img = preprocess_image(img)
+            text = pytesseract.image_to_string(processed_img)
+            ocr_method = "ocr"
 
-        text = pytesseract.image_to_string(processed_img).lower()
+        if text:
+            text_lower = text.lower()
+        else:
+            text_lower = ""
 
         # Extract Amount
-        amount = extract_amount(text)
+        amount = extract_amount(text_lower)
 
-        # Determine Category
+        # Determine Category based on keywords
         best_category = "Unsorted"
         for category, keywords in CATEGORIES.items():
             for keyword in keywords:
-                if keyword in text:
+                if keyword in text_lower:
                     best_category = category
                     break
             if best_category != "Unsorted":
                 break
 
-        return best_category, text, amount, False
+        return best_category, text, amount, False, ocr_method, ai_text
     except Exception as e:
         logging.warning(f"Could not process image {image_path}: {e}")
-        return None, None, None, False
+        return None, None, None, False, None, None
 
 def process_files(conn):
     logging.info("Scanning for screenshots...")
@@ -442,8 +529,8 @@ def process_files(conn):
 
             logging.info(f"Processing new file: {filename}")
 
-            # OCR-based categorization (returns 4 values now)
-            category, text, amount, is_video = categorize_image(file_path)
+            # Text extraction and categorization (returns 6 values)
+            category, text, amount, is_video, ocr_method, ai_extracted_text = categorize_image(file_path, use_ai_ocr=AI_OCR_ENABLED)
 
             # Initialize extended fields
             ai_category, ai_summary = None, None
@@ -505,11 +592,13 @@ def process_files(conn):
                     cursor.execute('''INSERT INTO screenshots
                         (filename, path, category, text, amount, created_at, processed_at,
                          ai_category, ai_summary, ai_processed_at,
-                         detected_language, translated_text, is_video, video_frames_analyzed, video_objects)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
+                         detected_language, translated_text, is_video, video_frames_analyzed, video_objects,
+                         ocr_method, ai_extracted_text)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
                         (filename, final_path, effective_category, text, amount, created_at, now_ms,
                          ai_category, ai_summary, now_ms if ai_category else None,
-                         detected_lang, translated_text, 1 if is_video else 0, video_frames_analyzed, video_objects))
+                         detected_lang, translated_text, 1 if is_video else 0, video_frames_analyzed, video_objects,
+                         ocr_method, ai_extracted_text))
                     conn.commit()
                     files_processed_count += 1
                 except Exception as e:
@@ -543,11 +632,50 @@ def process_ai_backfill(conn, limit=10):
         conn.commit()
     logging.info("AI backfill batch complete.")
 
+def process_ocr_backfill(conn, limit=5):
+    """Re-process entries with poor OCR using AI-based text extraction."""
+    if not AI_OCR_ENABLED or not AI_ENABLED:
+        return
+    cursor = conn.cursor()
+    # Find entries that used pytesseract OCR and don't have AI-extracted text
+    cursor.execute('''SELECT id, filename, path, text FROM screenshots
+                      WHERE (ocr_method = 'ocr' OR ocr_method IS NULL)
+                      AND ai_extracted_text IS NULL
+                      AND is_video = 0
+                      LIMIT ?''', (limit,))
+    rows = cursor.fetchall()
+    if not rows:
+        return
+
+    logging.info(f"OCR backfill: Re-processing {len(rows)} files with AI OCR")
+    for row_id, filename, path, old_text in rows:
+        if not os.path.exists(path):
+            logging.warning(f"File missing for OCR backfill: {path}")
+            continue
+        logging.info(f"AI OCR backfill: {filename}")
+        ai_text = extract_text_ai(path)
+        if ai_text:
+            # Also re-detect language and translate if enabled
+            detected_lang, translated_text = None, None
+            if TRANSLATION_ENABLED:
+                detected_lang, translated_text = process_text_translation(ai_text)
+
+            cursor.execute('''UPDATE screenshots
+                              SET ai_extracted_text=?, ocr_method='ai',
+                                  detected_language=?, translated_text=?
+                              WHERE id=?''',
+                           (ai_text, detected_lang, translated_text, row_id))
+            conn.commit()
+            logging.info(f"AI OCR: Extracted {len(ai_text)} chars (was {len(old_text) if old_text else 0})")
+    logging.info("OCR backfill batch complete.")
+
 def run_continuous(interval=60):
     conn = init_db()
     features = []
     if AI_ENABLED:
         features.append("AI")
+    if AI_OCR_ENABLED:
+        features.append("AI-OCR")
     if VIDEO_ENABLED:
         features.append("Video")
     if TRANSLATION_ENABLED:
@@ -557,9 +685,11 @@ def run_continuous(interval=60):
     try:
         while True:
             process_files(conn)
-            # Run AI backfill for existing files (process a few each cycle)
+            # Run backfill for existing files (process a few each cycle)
             if AI_ENABLED:
                 process_ai_backfill(conn, limit=3)
+            if AI_OCR_ENABLED:
+                process_ocr_backfill(conn, limit=2)
             time.sleep(interval)
     except KeyboardInterrupt:
         logging.info("Stopping...")
@@ -568,7 +698,8 @@ def run_continuous(interval=60):
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(description="Screenshot Sorter with AI, Video Analysis & Translation")
-    parser.add_argument('--ai', action='store_true', help='Enable Moondream2 AI analysis')
+    parser.add_argument('--ai', action='store_true', help='Enable Moondream2 AI analysis for categorization')
+    parser.add_argument('--ai-ocr', action='store_true', help='Use AI for text extraction (better than pytesseract)')
     parser.add_argument('--video', action='store_true', help='Enable video frame-by-frame analysis')
     parser.add_argument('--translate', action='store_true', help='Enable auto-translation of OCR text')
     parser.add_argument('--target-lang', type=str, default='en', help='Target language for translation (default: en)')
@@ -577,6 +708,9 @@ if __name__ == "__main__":
 
     if args.ai:
         AI_ENABLED = True
+    if args.ai_ocr:
+        AI_OCR_ENABLED = True
+        AI_ENABLED = True  # AI OCR requires AI to be enabled
     if args.video:
         VIDEO_ENABLED = True
         AI_ENABLED = True  # Video analysis requires AI
