@@ -1,3 +1,13 @@
+"""
+DEPRECATED: This standalone script has been integrated into sort_screenshots.py
+
+Use instead:
+    python sort_screenshots.py --ai
+
+This file is kept for reference and backward compatibility with the
+knowledge_base markdown output format. For database-integrated AI
+processing, use the main sort_screenshots.py with --ai flag.
+"""
 import os
 import sys
 import logging
