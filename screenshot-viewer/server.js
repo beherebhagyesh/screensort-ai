@@ -63,6 +63,16 @@ app.get('/api/stats', async (req, res) => {
     }
 });
 
+app.get('/api/dashboard', async (req, res) => {
+    try {
+        const data = await runBridge('dashboard_data');
+        res.json(data);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Failed to fetch dashboard data' });
+    }
+});
+
 app.get('/api/search', async (req, res) => {
     try {
         const query = req.query.q;

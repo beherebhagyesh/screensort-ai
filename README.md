@@ -3,7 +3,7 @@
 **ScreenSort AI** is an intelligent, privacy-first mobile application that transforms your chaotic screenshot folder into an organized, searchable vault. Running locally on your device (via Termux/Android), it uses OCR and AI categorization to sort images, extract data, and provide insights without your data ever leaving your phone.
 
 ![Status](https://img.shields.io/badge/Status-Beta-blue?style=for-the-badge)
-![Tech](https://img.shields.io/badge/Tech-Python%20%7C%20Moondream2%20%7C%20SQLite-green?style=for-the-badge)
+![Tech](https://img.shields.io/badge/Tech-Python%20%7C%20Moondream2%20%7C%20Chart.js-green?style=for-the-badge)
 
 ## Features
 
@@ -39,14 +39,16 @@ Automatically detect and translate text from screenshots.
 - **Auto-Translate:** Converts foreign text to English (or any target language)
 - **Preserved Original:** Keeps original OCR text alongside translation
 
-### 6. Insights & Analytics
-- **Spending Tracker:** Detects amounts ($, Rs, EUR, GBP) from receipts
-- **Visual Dashboard:** Storage usage, category breakdowns, recent activity
+### 6. Interactive Dashboard
+- **Activity Timeline:** Visual graph of screenshot activity over the last 14 days.
+- **Spending Tracker:** Tracks financial screenshots and visualizes spending trends over 30 days.
+- **Category Breakdown:** Interactive doughnut chart of your vault's composition.
+- **Language Stats:** Distribution of detected languages in your library.
+- **Dark Mode:** Sleek glassmorphism UI with neon accents.
 
 ### 7. Web UI
-- **Dark Mode** by default
-- **Glassmorphism** aesthetic with neon accents
-- **Responsive Web Viewer** accessible from any browser on your local network
+- **Responsive Viewer:** Accessible from any browser on your local network
+- **Instant Search:** Find receipts, chats, or code snippets instantly
 
 ---
 

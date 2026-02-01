@@ -5,6 +5,7 @@
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
     <title>ScreenSort AI Dashboard</title>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
     <script id="tailwind-config">
@@ -20,16 +21,11 @@
                         "glass-border": "rgba(255, 255, 255, 0.1)",
                         "neon-cyan": "#00f2ff",
                         "neon-purple": "#bc13fe",
-                        "neon-lime": "#39ff14"
+                        "neon-lime": "#39ff14",
+                        "chart-bg": "rgba(15, 24, 42, 0.6)"
                     },
                     fontFamily: {
                         "display": ["Inter", "sans-serif"]
-                    },
-                    borderRadius: {
-                        "DEFAULT": "0.5rem",
-                        "lg": "1rem",
-                        "xl": "1.5rem",
-                        "full": "9999px"
                     },
                 },
             },
@@ -48,21 +44,16 @@
                 radial-gradient(at 0% 0%, rgba(40, 119, 246, 0.15) 0px, transparent 50%),
                 radial-gradient(at 100% 0%, rgba(188, 19, 254, 0.1) 0px, transparent 50%);
         }
-        .pie-chart-conic {
-            background: conic-gradient(
-                #2877f6 0% 45%, 
-                #bc13fe 45% 75%, 
-                #39ff14 75% 100%
-            );
-        }
-        body {
-            min-height: max(884px, 100dvh);
-        }
+        body { min-height: 100vh; }
+        /* Custom Scrollbar for list */
+        .scroller::-webkit-scrollbar { width: 4px; }
+        .scroller::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
     </style>
 </head>
-<body class="font-display bg-background-light dark:bg-background-dark text-white min-h-screen mesh-gradient overflow-x-hidden">
-    <!-- Top Navigation Bar -->
-    <nav class="sticky top-0 z-50 flex items-center justify-between px-6 pt-12 pb-4 backdrop-blur-md">
+<body class="font-display bg-background-light dark:bg-background-dark text-white min-h-screen mesh-gradient overflow-x-hidden pb-24">
+
+    <!--Navbar -->
+    <nav class="sticky top-0 z-50 flex items-center justify-between px-6 pt-6 pb-4 backdrop-blur-md bg-background-dark/50">
         <div class="flex items-center gap-3">
             <div class="size-10 rounded-full glass flex items-center justify-center border border-white/20">
                 <span class="material-symbols-outlined text-primary text-xl">auto_awesome</span>
@@ -70,98 +61,96 @@
             <h1 class="text-lg font-bold tracking-tight text-white">ScreenSort AI</h1>
         </div>
         <div class="flex gap-4">
-            <button class="size-10 rounded-full glass flex items-center justify-center relative">
-                <span class="material-symbols-outlined text-white/80">notifications</span>
-                <span class="absolute top-2 right-2 size-2 bg-red-500 rounded-full"></span>
+             <button onclick="fetchData()" class="size-10 rounded-full glass flex items-center justify-center hover:bg-white/10 transition-colors">
+                <span class="material-symbols-outlined text-white/80">refresh</span>
             </button>
         </div>
     </nav>
-    <!-- Hero Header -->
-    <header class="px-6 py-6">
-        <h2 class="text-[26px] font-semibold leading-tight text-white/90">
-            Good Afternoon.<br/>
-            <span class="text-white">You have <span class="text-primary font-bold">12 new</span> screenshots to review.</span>
-        </h2>
-    </header>
-    <!-- Storage Widget (Hero Glass) -->
-    <section class="px-6 mb-8">
-        <div class="glass p-6 rounded-3xl relative overflow-hidden group">
-            <div class="absolute -right-4 -top-4 size-32 bg-primary/20 blur-3xl rounded-full"></div>
-            <div class="relative z-10 flex justify-between items-center">
-                <div>
-                    <p class="text-white/60 text-sm font-medium mb-1 uppercase tracking-widest">Optimized Storage</p>
-                    <div class="flex items-baseline gap-2">
-                        <span class="text-5xl font-bold tracking-tighter">2.4</span>
-                        <span class="text-2xl font-semibold text-primary">GB</span>
-                    </div>
-                    <p class="text-white/40 text-xs mt-2 flex items-center gap-1">
-                        <span class="material-symbols-outlined text-[14px] text-green-400">check_circle</span>
-                        AI optimization is active
-                    </p>
+
+    <!-- Content Grid -->
+    <main class="px-6 space-y-6 max-w-4xl mx-auto">
+        
+        <!-- Row 1: Activity Chart & Category Doughnut -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            
+            <!-- Activity Chart -->
+            <div class="glass p-6 rounded-3xl flex flex-col">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-sm font-semibold text-white/90 uppercase tracking-wider">Activity</h3>
+                    <span class="text-xs text-white/40">Last 14 Days</span>
                 </div>
-                <button class="bg-primary hover:bg-primary/90 text-white px-5 py-3 rounded-2xl font-semibold text-sm transition-all shadow-lg shadow-primary/20">
-                    Clean Up
-                </button>
+                <div class="flex-1 min-h-[200px] relative">
+                    <canvas id="activityChart"></canvas>
+                </div>
             </div>
-        </div>
-    </section>
-    <!-- Analytics Section -->
-    <section class="px-6 mb-8">
-        <div class="flex items-center justify-between mb-4">
-            <h3 class="text-lg font-bold text-white/90">Categories</h3>
-            <span class="text-xs font-medium text-white/40 uppercase tracking-widest">Last 30 Days</span>
-        </div>
-        <div class="glass p-6 rounded-3xl flex items-center gap-8">
-            <div class="relative size-32 flex-shrink-0">
-                <div class="pie-chart-conic size-full rounded-full flex items-center justify-center">
-                    <div class="size-[80%] bg-[#0f182a] rounded-full flex flex-col items-center justify-center">
-                        <span class="text-xl font-bold leading-none">842</span>
-                        <span class="text-[10px] text-white/40 uppercase tracking-tighter">Total</span>
+
+            <!-- Categories -->
+            <div class="glass p-6 rounded-3xl flex flex-col">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-sm font-semibold text-white/90 uppercase tracking-wider">Storage</h3>
+                    <span class="text-xs text-white/40">By Category</span>
+                </div>
+                <div class="flex-1 min-h-[200px] relative flex items-center justify-center">
+                    <canvas id="categoryChart"></canvas>
+                    <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <div class="text-center">
+                             <span id="total-count" class="text-3xl font-bold block">0</span>
+                             <span class="text-[10px] uppercase text-white/40 tracking-widest">Items</span>
+                        </div>
                     </div>
                 </div>
             </div>
-            <div class="flex flex-col gap-3 flex-1">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-2">
-                        <span class="size-2 rounded-full bg-primary shadow-[0_0_8px_#2877f6]"></span>
-                        <span class="text-sm font-medium text-white/80">Finance</span>
-                    </div>
-                    <span class="text-sm font-bold">45%</span>
+        </div>
+
+        <!-- Row 2: Finance Bar Chart -->
+        <div class="glass p-6 rounded-3xl">
+             <div class="flex justify-between items-center mb-4">
+                <div class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-neon-lime">payments</span>
+                    <h3 class="text-sm font-semibold text-white/90 uppercase tracking-wider">Spending Tracker</h3>
                 </div>
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-2">
-                        <span class="size-2 rounded-full bg-neon-purple shadow-[0_0_8px_#bc13fe]"></span>
-                        <span class="text-sm font-medium text-white/80">Social</span>
-                    </div>
-                    <span class="text-sm font-bold">30%</span>
+                <span class="text-xs text-white/40">Detected Amounts (Last 30 Days)</span>
+            </div>
+            <div class="h-[200px] w-full">
+                <canvas id="financeChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Row 3: Recent Activity & Languages -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            
+            <!-- Recent List (Takes up 2 cols) -->
+            <div class="md:col-span-2 glass p-6 rounded-3xl flex flex-col">
+                 <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-sm font-semibold text-white/90 uppercase tracking-wider">Recent Analysis</h3>
                 </div>
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-2">
-                        <span class="size-2 rounded-full bg-neon-lime shadow-[0_0_8px_#39ff14]"></span>
-                        <span class="text-sm font-medium text-white/80">Code</span>
+                <div id="recent-list" class="space-y-3 flex-1 overflow-y-auto max-h-[400px] scroller pr-2">
+                    <!-- JS Injected -->
+                    <div class="animate-pulse flex gap-3">
+                        <div class="size-12 bg-white/10 rounded-lg"></div>
+                        <div class="flex-1 space-y-2 py-1">
+                            <div class="h-3 bg-white/10 rounded w-1/2"></div>
+                            <div class="h-2 bg-white/10 rounded w-3/4"></div>
+                        </div>
                     </div>
-                    <span class="text-sm font-bold">25%</span>
+                </div>
+            </div>
+
+            <!-- Language Stats (1 col) -->
+            <div class="glass p-6 rounded-3xl flex flex-col">
+                 <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-sm font-semibold text-white/90 uppercase tracking-wider">Languages</h3>
+                </div>
+                 <div class="flex-1 min-h-[150px] relative flex items-center justify-center">
+                    <canvas id="languageChart"></canvas>
+                </div>
+                <div id="lang-legend" class="mt-4 space-y-2 text-xs text-white/60">
+                    <!-- Legend -->
                 </div>
             </div>
         </div>
-    </section>
-    <!-- Recent Insights -->
-    <section class="px-6 mb-24">
-        <div class="flex items-center justify-between mb-4">
-            <h3 class="text-lg font-bold text-white/90">AI Insights</h3>
-            <button class="text-sm font-medium text-primary">View all</button>
-        </div>
-        <div id="insights-container" class="flex flex-col gap-3">
-            <!-- Insights will be injected here by JS -->
-            <div class="glass p-4 rounded-2xl flex items-center gap-4 animate-pulse">
-                 <div class="size-16 rounded-xl bg-white/10"></div>
-                 <div class="flex-1 space-y-2">
-                     <div class="h-4 bg-white/10 rounded w-1/2"></div>
-                     <div class="h-3 bg-white/10 rounded w-3/4"></div>
-                 </div>
-            </div>
-        </div>
-    </section>
+
+    </main>
 
     <!-- Search Overlay -->
     <div id="search-overlay" class="fixed inset-0 z-[60] bg-background-dark/95 backdrop-blur-xl hidden flex-col p-6 animate-fade-in">
@@ -171,204 +160,254 @@
                 <span class="material-symbols-outlined text-white">close</span>
             </button>
         </div>
-        
         <div class="relative mb-6">
             <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-white/50">search</span>
             <input type="text" id="search-input" oninput="handleSearch(this.value)" 
                    class="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-white placeholder-white/40 focus:outline-none focus:border-primary/50 transition-colors"
-                   placeholder="Type 'wifi', 'receipt', '$50'...">
+                   placeholder="Search text, categories, amounts...">
         </div>
-
-        <div id="search-results" class="flex-1 overflow-y-auto space-y-3">
-            <!-- Results injected here -->
-            <div class="text-center text-white/30 mt-10">
-                <span class="material-symbols-outlined text-4xl mb-2">manage_search</span>
-                <p>Search your entire history by text or category.</p>
-            </div>
-        </div>
+        <div id="search-results" class="flex-1 overflow-y-auto space-y-3"></div>
     </div>
 
-    <!-- iOS Bottom Navigation Bar -->
-    <nav class="fixed bottom-0 w-full px-6 pb-8 pt-4 backdrop-blur-2xl bg-background-dark/80 border-t border-white/5 flex justify-between items-center z-50">
+    <!-- Bottom Nav -->
+    <nav class="fixed bottom-0 w-full px-6 pb-6 pt-4 backdrop-blur-2xl bg-background-dark/80 border-t border-white/5 flex justify-between items-center z-50">
         <button class="flex flex-col items-center gap-1 group">
-            <span class="material-symbols-outlined text-primary fill-1">home</span>
-            <span class="text-[10px] font-bold text-primary">Home</span>
+            <span class="material-symbols-outlined text-primary fill-1">dashboard</span>
+            <span class="text-[10px] font-bold text-primary">Dash</span>
         </button>
-        <button class="flex flex-col items-center gap-1 group opacity-40">
-            <span class="material-symbols-outlined text-white group-hover:text-primary transition-colors">grid_view</span>
-            <span class="text-[10px] font-medium text-white group-hover:text-primary transition-colors">Vault</span>
+        <button onclick="toggleSearch()" class="flex flex-col items-center gap-1 group opacity-60 hover:opacity-100 transition-opacity">
+            <span class="material-symbols-outlined text-white">search</span>
+            <span class="text-[10px] font-medium text-white">Search</span>
         </button>
         <div class="relative -top-6">
-            <button class="size-14 rounded-full bg-primary flex items-center justify-center shadow-xl shadow-primary/40 border-4 border-[#0f182a]">
-                <span class="material-symbols-outlined text-white text-3xl">scan_delete</span>
+            <button class="size-14 rounded-full bg-primary flex items-center justify-center shadow-xl shadow-primary/40 border-4 border-[#0f182a] active:scale-95 transition-transform">
+                <span class="material-symbols-outlined text-white text-3xl">add_a_photo</span>
             </button>
         </div>
-        <button id="nav-search-btn" onclick="toggleSearch()" class="flex flex-col items-center gap-1 group opacity-40 hover:opacity-100 transition-opacity">
-            <span class="material-symbols-outlined text-white group-hover:text-primary transition-colors">search</span>
-            <span class="text-[10px] font-medium text-white group-hover:text-primary transition-colors">Search</span>
+        <button class="flex flex-col items-center gap-1 group opacity-60 hover:opacity-100 transition-opacity">
+            <span class="material-symbols-outlined text-white">folder_open</span>
+            <span class="text-[10px] font-medium text-white">Files</span>
         </button>
-        <button class="flex flex-col items-center gap-1 group opacity-40">
-            <span class="material-symbols-outlined text-white group-hover:text-primary transition-colors">settings</span>
-            <span class="text-[10px] font-medium text-white group-hover:text-primary transition-colors">Settings</span>
+        <button class="flex flex-col items-center gap-1 group opacity-60 hover:opacity-100 transition-opacity">
+            <span class="material-symbols-outlined text-white">settings</span>
+            <span class="text-[10px] font-medium text-white">Config</span>
         </button>
     </nav>
-    <!-- Decorative background elements -->
-    <div class="fixed top-1/4 -left-20 size-64 bg-primary/5 blur-[100px] rounded-full -z-10"></div>
-    <div class="fixed bottom-1/4 -right-20 size-64 bg-neon-purple/5 blur-[100px] rounded-full -z-10"></div>
 
+    <!-- JS Logic -->
     <script>
-        // --- PWA Service Worker Registration ---
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/service-worker.js')
-                    .then((reg) => console.log('Service Worker Registered!', reg.scope))
-                    .catch((err) => console.log('Service Worker Registration Failed:', err));
-            });
+        // --- Chart Configuration Defaults ---
+        Chart.defaults.color = 'rgba(255, 255, 255, 0.5)';
+        Chart.defaults.borderColor = 'rgba(255, 255, 255, 0.1)';
+        Chart.defaults.font.family = 'Inter';
+
+        let charts = {}; // Store chart instances
+
+        async function fetchData() {
+            try {
+                const res = await fetch('/api/dashboard');
+                const data = await res.json();
+                renderCharts(data);
+                renderRecent(data.recent);
+            } catch (e) {
+                console.error("Fetch failed", e);
+            }
         }
 
-        // --- Search Logic ---
+        function renderCharts(data) {
+            // 1. Activity Chart (Line)
+            const ctxActivity = document.getElementById('activityChart').getContext('2d');
+            if (charts.activity) charts.activity.destroy();
+            
+            const gradientActivity = ctxActivity.createLinearGradient(0, 0, 0, 300);
+            gradientActivity.addColorStop(0, 'rgba(40, 119, 246, 0.5)');
+            gradientActivity.addColorStop(1, 'rgba(40, 119, 246, 0)');
+
+            charts.activity = new Chart(ctxActivity, {
+                type: 'line',
+                data: {
+                    labels: data.activity.map(d => d.date.slice(5)), // Show MM-DD
+                    datasets: [{
+                        label: 'Screenshots',
+                        data: data.activity.map(d => d.count),
+                        borderColor: '#2877f6',
+                        backgroundColor: gradientActivity,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 4,
+                        pointBackgroundColor: '#0f182a',
+                        pointBorderColor: '#2877f6',
+                        pointBorderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, grid: { borderDash: [4, 4] } },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+
+            // 2. Category Chart (Doughnut)
+            const ctxCat = document.getElementById('categoryChart').getContext('2d');
+            if (charts.category) charts.category.destroy();
+            
+            const catColors = ['#2877f6', '#bc13fe', '#39ff14', '#facc15', '#f87171', '#a8a29e'];
+            const totalItems = data.categories.reduce((acc, c) => acc + c.count, 0);
+            document.getElementById('total-count').textContent = totalItems;
+
+            charts.category = new Chart(ctxCat, {
+                type: 'doughnut',
+                data: {
+                    labels: data.categories.map(c => c.name),
+                    datasets: [{
+                        data: data.categories.map(c => c.count),
+                        backgroundColor: catColors,
+                        borderWidth: 0,
+                        hoverOffset: 10
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '75%',
+                    plugins: { legend: { display: false } }
+                }
+            });
+
+            // 3. Finance Chart (Bar)
+            const ctxFin = document.getElementById('financeChart').getContext('2d');
+            if (charts.finance) charts.finance.destroy();
+            
+            charts.finance = new Chart(ctxFin, {
+                type: 'bar',
+                data: {
+                    labels: data.finance.map(d => d.date.slice(5)),
+                    datasets: [{
+                        label: 'Spending',
+                        data: data.finance.map(d => d.total),
+                        backgroundColor: '#39ff14',
+                        borderRadius: 4,
+                        barThickness: 12
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { 
+                            beginAtZero: true, 
+                            grid: { borderDash: [4, 4] },
+                            ticks: { callback: (val) => '$' + val }
+                        },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+
+            // 4. Language Chart (Pie)
+            const ctxLang = document.getElementById('languageChart').getContext('2d');
+            if (charts.language) charts.language.destroy();
+            
+            if (data.languages && data.languages.length > 0) {
+                 charts.language = new Chart(ctxLang, {
+                    type: 'pie',
+                    data: {
+                        labels: data.languages.map(l => l.lang || 'Unknown'),
+                        datasets: [{
+                            data: data.languages.map(l => l.count),
+                            backgroundColor: ['#f472b6', '#60a5fa', '#34d399', '#fbbf24'],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { position: 'right', labels: { boxWidth: 10, font: { size: 10 } } } }
+                    }
+                });
+            } else {
+                // Show placeholder if no languages
+                 // ctxLang.canvas.parentNode.innerHTML = '<div class="text-xs text-white/30">No translations yet</div>';
+            }
+        }
+
+        function renderRecent(items) {
+            const list = document.getElementById('recent-list');
+            if (!items || items.length === 0) {
+                list.innerHTML = '<div class="text-center text-white/30 text-sm">No recent files</div>';
+                return;
+            }
+
+            list.innerHTML = items.map(item => `
+                <div class="glass p-3 rounded-xl flex gap-3 items-start group hover:bg-white/5 transition-colors cursor-pointer">
+                    <div class="size-14 rounded-lg bg-center bg-cover border border-white/10 flex-shrink-0 relative overflow-hidden" 
+                         style="background-image: url('${item.path.replace("'", "\'"')}')">
+                         ${item.is_video ? '<div class="absolute inset-0 flex items-center justify-center bg-black/30"><span class="material-symbols-outlined text-white text-sm">play_circle</span></div>' : ''}
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex justify-between items-center">
+                            <h4 class="text-white font-medium text-sm truncate pr-2">${item.ai_summary || item.category}</h4>
+                            <span class="text-[10px] text-white/40 whitespace-nowrap">${new Date(item.created_at).toLocaleDateString()}</span>
+                        </div>
+                        <p class="text-xs text-white/50 line-clamp-1 mt-0.5">${item.text_preview || "No text detected"}</p>
+                        <div class="flex items-center gap-2 mt-1.5">
+                            <span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-white/10 text-white/70 uppercase tracking-wide">${item.category}</span>
+                            ${item.amount ? `<span class="text-neon-lime text-[10px] font-bold">$${item.amount}</span>` : ''}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Search Logic (Reused)
         function toggleSearch() {
             const overlay = document.getElementById('search-overlay');
             overlay.classList.toggle('hidden');
             overlay.classList.toggle('flex');
-            if(!overlay.classList.contains('hidden')) {
-                document.getElementById('search-input').focus();
-            }
+            if(!overlay.classList.contains('hidden')) document.getElementById('search-input').focus();
         }
 
         let searchTimeout;
         function handleSearch(query) {
             clearTimeout(searchTimeout);
             const resultsDiv = document.getElementById('search-results');
-            
             if (!query || query.length < 2) {
-                resultsDiv.innerHTML = `
-                    <div class="text-center text-white/30 mt-10">
-                        <span class="material-symbols-outlined text-4xl mb-2">manage_search</span>
-                        <p>Search your entire history by text or category.</p>
-                    </div>`;
-                return;
+                resultsDiv.innerHTML = ''; return;
             }
-
             resultsDiv.innerHTML = '<div class="text-center text-white/50 mt-4">Searching...</div>';
-
             searchTimeout = setTimeout(async () => {
                 try {
                     const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
                     const items = await res.json();
-                    
                     if (items.length === 0) {
                         resultsDiv.innerHTML = '<div class="text-center text-white/50 mt-10">No matches found.</div>';
                         return;
                     }
-
                     resultsDiv.innerHTML = items.map(item => `
                         <div class="glass p-3 rounded-xl flex gap-3 items-start animate-fade-in">
                             <div class="size-16 rounded-lg bg-center bg-cover flex-shrink-0 bg-white/5" 
-                                 style="background-image: url('${item.path.replace("'", "\\'")}');"></div>
+                                 style="background-image: url('${item.path.replace("'", "\'"')}')">
+                            </div>
                             <div class="flex-1 min-w-0">
                                 <div class="flex justify-between">
                                     <h4 class="text-white font-medium text-sm truncate">${item.category}</h4>
                                     ${item.amount ? `<span class="text-neon-lime text-xs font-bold">$${item.amount}</span>` : ''}
                                 </div>
                                 <p class="text-white/40 text-xs mt-1 line-clamp-2">${item.text_snippet || 'No text content'}</p>
-                                <p class="text-[10px] text-white/30 mt-2">${item.filename}</p>
                             </div>
                         </div>
                     `).join('');
-
-                } catch (e) {
-                    console.error(e);
-                    resultsDiv.innerHTML = '<div class="text-red-400 text-center mt-4">Search failed.</div>';
-                }
-            }, 500); // 500ms debounce
-        }
-
-        // --- Stats Logic ---
-        async function fetchStats() {
-            try {
-                const response = await fetch('/api/stats');
-                const data = await response.json();
-
-                // 1. Update Hero
-                // Assuming we want to show total files or new files. 
-                // For now, let's show total files as "files to review" or just total managed.
-                // Or better, let's mock "New" as a random small number for the vibe, or 0.
-                const newFiles = Math.floor(Math.random() * 5); // Mock "New"
-                const heroTextHTML = `You have <span class="text-primary font-bold">${data.total_photos} items</span> in your vault.`;
-                const heroHeader = document.querySelector('header h2');
-                if(heroHeader) {
-                    heroHeader.innerHTML = `Good Afternoon.<br/><span class="text-white">${heroTextHTML}</span>`;
-                }
-
-                // 2. Update Storage
-                const storageEl = document.querySelector('#storage-amount');
-                if (storageEl) storageEl.textContent = data.storage_usage.replace(' GB', ''); // Keep just number if needed, or update full
-
-                // Update the full block for storage if IDs were hard to place on specific spans:
-                const storageWidget = document.querySelector('.glass .text-5xl');
-                if(storageWidget) storageWidget.textContent = parseFloat(data.storage_usage).toFixed(1);
-
-                // 3. Update Pie Chart Center
-                const pieCenter = document.querySelector('.pie-chart-conic span.text-xl');
-                if(pieCenter) pieCenter.textContent = data.total_photos;
-
-                // 4. Update Categories List
-                const catContainer = document.querySelector('.pie-chart-conic').parentElement.parentElement.nextElementSibling;
-                if(catContainer) {
-                    catContainer.innerHTML = ''; // Clear hardcoded
-                    const colors = ['bg-primary', 'bg-neon-purple', 'bg-neon-lime', 'bg-yellow-400', 'bg-red-400'];
-                    const shadows = ['#2877f6', '#bc13fe', '#39ff14', '#facc15', '#f87171'];
-                    
-                    data.categories.slice(0, 3).forEach((cat, index) => {
-                        const color = colors[index % colors.length];
-                        const shadow = shadows[index % shadows.length];
-                        const html = `
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-center gap-2">
-                                    <span class="size-2 rounded-full ${color} shadow-[0_0_8px_${shadow}]"></span>
-                                    <span class="text-sm font-medium text-white/80">${cat.name}</span>
-                                </div>
-                                <span class="text-sm font-bold">${cat.percentage}%</span>
-                            </div>
-                        `;
-                        catContainer.innerHTML += html;
-                    });
-                }
-
-                // 5. Update Insights
-                const insightsContainer = document.getElementById('insights-container');
-                if(insightsContainer && data.insights.length > 0) {
-                    insightsContainer.innerHTML = '';
-                    data.insights.forEach(item => {
-                        const html = `
-                            <div class="glass p-4 rounded-2xl flex items-center gap-4">
-                                <div class="size-16 rounded-xl bg-center bg-cover border border-white/10" 
-                                     style="background-image: url('${item.image.replace("'", "\\'")}');"></div>
-                                <div class="flex-1">
-                                    <div class="flex justify-between items-start">
-                                        <p class="text-sm font-semibold text-white">${item.title}</p>
-                                        <span class="text-[10px] bg-white/10 text-white/80 px-2 py-0.5 rounded-full font-bold uppercase">${item.category}</span>
-                                    </div>
-                                    <p class="text-xs text-white/60 mt-1">${item.detail}</p>
-                                    <p class="text-[10px] text-white/40 mt-1">${new Date(item.time).toLocaleTimeString()}</p>
-                                </div>
-                                <span class="material-symbols-outlined text-white/30">chevron_right</span>
-                            </div>
-                        `;
-                        insightsContainer.innerHTML += html;
-                    });
-                } else if (insightsContainer) {
-                    insightsContainer.innerHTML = '<div class="p-4 text-center text-white/40 text-sm">No recent insights found.</div>';
-                }
-
-            } catch (e) {
-                console.error("Failed to fetch stats", e);
-            }
+                } catch (e) {}
+            }, 500);
         }
 
         // Init
-        fetchStats();
+        fetchData();
     </script>
 </body>
 </html>
