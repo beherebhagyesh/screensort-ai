@@ -187,6 +187,16 @@ screenshots (
 | `SCREENSORT_VIDEO` | `0` | Enable video analysis |
 | `SCREENSORT_TRANSLATE` | `0` | Enable translation |
 
+## Development Tools
+
+### Mock Data Seeding
+To test the dashboard without scanning thousands of real screenshots, you can populate the database with realistic mock data (activity, finance, categories).
+
+```bash
+# Generates 50 mock entries for the last 14 days
+python seed_db.py
+```
+
 ---
 
 ## Contributing
