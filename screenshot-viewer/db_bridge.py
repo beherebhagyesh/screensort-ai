@@ -138,6 +138,35 @@ def search(query):
     
     print(json.dumps(results))
 
+def get_category_files(category, sort_by="date_desc"):
+    conn = get_db()
+    c = conn.cursor()
+    
+    order_clause = "created_at DESC"
+    if sort_by == "date_asc":
+        order_clause = "created_at ASC"
+    elif sort_by == "name_asc":
+        order_clause = "filename ASC"
+    elif sort_by == "name_desc":
+        order_clause = "filename DESC"
+    elif sort_by == "amount_desc":
+        order_clause = "amount DESC NULLS LAST"
+
+    sql = f"SELECT * FROM screenshots WHERE category = ? ORDER BY {order_clause}"
+    c.execute(sql, (category,))
+    
+    files = []
+    for r in c.fetchall():
+        files.append({
+            "name": r['filename'],
+            "path": r['path'].replace('/sdcard/Pictures/Screenshots', '/images'),
+            "created_at": r['created_at'],
+            "ai_summary": r['ai_summary'],
+            "amount": r['amount']
+        })
+    
+    print(json.dumps({"files": files}))
+
 def main():
     if len(sys.argv) < 2:
         print(json.dumps({"error": "No command provided"}))
@@ -154,6 +183,13 @@ def main():
             print(json.dumps([]))
         else:
             search(sys.argv[2])
+    elif command == "get_category_files":
+        if len(sys.argv) < 3:
+            print(json.dumps({"error": "Missing category"}))
+        else:
+            cat = sys.argv[2]
+            sort = sys.argv[3] if len(sys.argv) > 3 else "date_desc"
+            get_category_files(cat, sort)
     else:
         print(json.dumps({"error": "Unknown command"}))
 

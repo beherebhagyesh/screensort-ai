@@ -27,3 +27,11 @@ Goal: Align the UI with the product guidelines and ensure full functionality.
 - [ ] Task: Implement a **Full-Screen Image Viewer** with details (OCR text, date, metadata).
 - [ ] Task: Ensure the layout is fully responsive and optimized for mobile touch targets (44x44px).
 - [ ] Task: Conductor - User Manual Verification 'Phase 3: Visual Polish (Dark Material Design)' (Protocol in workflow.md)
+
+## Phase 4: Advanced Sorting & Metadata
+Goal: Enhance the viewing experience with advanced sorting options (Date, Name) and metadata integration.
+
+- [ ] Task: Update `db_bridge.py` to support querying category files with specific sort orders (Newest, Oldest, Name).
+- [ ] Task: Update `server.js` to expose the new sorting capabilities via the API.
+- [ ] Task: Update `index.html` to add sort controls to the Category View and fetch sorted data.
+- [ ] Task: Conductor - User Manual Verification 'Phase 4: Advanced Sorting & Metadata' (Protocol in workflow.md)
