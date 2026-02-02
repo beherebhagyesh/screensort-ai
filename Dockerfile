@@ -9,6 +9,8 @@ LABEL description="AI-powered screenshot organizer with OCR, translation, and vi
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    cmake \
     tesseract-ocr \
     tesseract-ocr-eng \
     libgl1-mesa-glx \
