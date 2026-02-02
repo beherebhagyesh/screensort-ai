@@ -199,8 +199,11 @@
                     title = item.text_preview.substring(0, 50) + (item.text_preview.length > 50 ? '...' : '');
                 }
 
+                // Escape summary for usage in onclick string
+                const safeSummary = (item.ai_summary || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                
                 return `
-                <div class="md-card md-card-clickable" onclick="openImage('${item.path}', '${item.name}', '${item.created_at}')" style="display: flex; gap: 16px; align-items: flex-start; padding: 12px;">
+                <div class="md-card md-card-clickable" onclick="openImage('${item.path}', '${item.name}', '${item.created_at}', '${safeSummary}')" style="display: flex; gap: 16px; align-items: flex-start; padding: 12px;">
                     <div style="width: 64px; height: 64px; border-radius: 12px; background-image: ${bgImage}; background-size: cover; background-position: center; background-color: #333; flex-shrink: 0;"></div>
                     <div style="flex: 1; min-width: 0;">
                         <div style="font-weight: 600; font-size: 14px; margin-bottom: 4px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.3;">${title}</div>
@@ -285,23 +288,35 @@
             }
         }
 
-        function openImage(path, name, date) {
+        function openImage(path, name, date, summary) {
             // Fix path if it's full path
             let src = path;
-            if (!src.startsWith('/')) src = '/images/' + path.split('/').pop(); // Simplified fallback
-            // Actually, if we are in category view, path is constructed. 
-            // Let's rely on the passed path being usable or relative.
+            if (!src.startsWith('/')) src = '/images/' + path.split('/').pop(); 
             
-            // If the path from API (recent) is full path "/sdcard/...", we need to map it to our static route.
-            // Our server serves "/sdcard/Pictures/Screenshots" at "/images".
-            // So if path is "/sdcard/Pictures/Screenshots/Finance/img.jpg", src should be "/images/Finance/img.jpg".
             if (path.includes('/sdcard/Pictures/Screenshots/')) {
                  src = path.replace('/sdcard/Pictures/Screenshots/', '/images/');
             }
             
             document.getElementById('viewer-img').src = src;
             document.getElementById('viewer-filename').textContent = name;
-            document.getElementById('viewer-date').textContent = date || '';
+            document.getElementById('viewer-date').textContent = date ? new Date(parseInt(date) || date).toLocaleString() : '';
+            
+            // Handle AI Summary display
+            const detailsDiv = document.getElementById('viewer-details');
+            // Remove old summary if exists
+            const oldSum = document.getElementById('viewer-summary');
+            if(oldSum) oldSum.remove();
+
+            if (summary && summary !== 'null') {
+                const sumEl = document.createElement('p');
+                sumEl.id = 'viewer-summary';
+                sumEl.style.fontSize = '14px';
+                sumEl.style.marginTop = '8px';
+                sumEl.style.lineHeight = '1.4';
+                sumEl.innerHTML = `<strong>AI Note:</strong> ${summary}`;
+                detailsDiv.appendChild(sumEl);
+            }
+
             document.getElementById('image-viewer').style.display = 'flex';
         }
 
