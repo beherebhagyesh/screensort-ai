@@ -17,9 +17,13 @@ Goal: Enable PWA features for the Express-based viewer.
 - [x] Task: Update the UI to include a "Install App" prompt or ensure the browser's native prompt is correctly triggered. <!-- 33798f6 -->
 - [ ] Task: Conductor - User Manual Verification 'Phase 2: PWA Implementation' (Protocol in workflow.md)
 
-## Phase 3: Visual Polish (Dark Material Design)
-Goal: Align the UI with the product guidelines.
+## Phase 3: Visual Polish & Feature Completion (Material Design)
+Goal: Align the UI with the product guidelines and ensure full functionality.
 
-- [ ] Task: Implement a dark Material Design theme using CSS.
+- [~] Task: Create `public/styles.css` with Material Design 3 variables (colors, typography, elevation) to reduce reliance on external CDNs.
+- [ ] Task: Refactor `index.html` to implement client-side routing/tab switching (Dashboard, Gallery, Settings).
+- [ ] Task: Implement the **Gallery View** to list all screenshot categories/folders.
+- [ ] Task: Implement the **Category Grid View** to display thumbnails of images within a selected category.
+- [ ] Task: Implement a **Full-Screen Image Viewer** with details (OCR text, date, metadata).
 - [ ] Task: Ensure the layout is fully responsive and optimized for mobile touch targets (44x44px).
 - [ ] Task: Conductor - User Manual Verification 'Phase 3: Visual Polish (Dark Material Design)' (Protocol in workflow.md)

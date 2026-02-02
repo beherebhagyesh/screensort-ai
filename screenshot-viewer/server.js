@@ -113,32 +113,3 @@ if (require.main === module) {
 }
 
 module.exports = app;
-
-app.get('/api/category/:name', (req, res) => {
-    try {
-        const catName = req.params.name;
-        if (catName.includes('..')) return res.status(400).send('Invalid');
-        
-        const dir = path.join(SCREENSHOTS_DIR, catName);
-        if (!fs.existsSync(dir)) return res.status(404).send('Not found');
-
-        const files = fs.readdirSync(dir)
-            .filter(f => !f.startsWith('.'))
-            .map(f => ({
-                name: f,
-                time: fs.statSync(path.join(dir, f)).mtime.getTime()
-            }))
-            .sort((a, b) => b.time - a.time) // Newest first
-            .map(f => f.name);
-
-        res.json({ files });
-    } catch (e) {
-        res.status(500).send(e.toString());
-    }
-});
-
-if (require.main === module) {
-    app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-}
-
-module.exports = app;

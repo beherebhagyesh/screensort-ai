@@ -1,421 +1,319 @@
 <!DOCTYPE html>
-<html class="dark" lang="en">
+<html lang="en">
 <head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-    <title>ScreenSort AI Dashboard</title>
-    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-    <script id="tailwind-config">
-        tailwind.config = {
-            darkMode: "class",
-            theme: {
-                extend: {
-                    colors: {
-                        "primary": "#2877f6",
-                        "background-light": "#f1f2f4",
-                        "background-dark": "#0f182a",
-                        "glass-white": "rgba(255, 255, 255, 0.05)",
-                        "glass-border": "rgba(255, 255, 255, 0.1)",
-                        "neon-cyan": "#00f2ff",
-                        "neon-purple": "#bc13fe",
-                        "neon-lime": "#39ff14",
-                        "chart-bg": "rgba(15, 24, 42, 0.6)"
-                    },
-                    fontFamily: {
-                        "display": ["Inter", "sans-serif"]
-                    },
-                },
-            },
-        }
-    </script>
-    <style>
-        .glass {
-            background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        .mesh-gradient {
-            background-color: #0f182a;
-            background-image: 
-                radial-gradient(at 0% 0%, rgba(40, 119, 246, 0.15) 0px, transparent 50%),
-                radial-gradient(at 100% 0%, rgba(188, 19, 254, 0.1) 0px, transparent 50%);
-        }
-        body { min-height: 100vh; }
-        /* Custom Scrollbar for list */
-        .scroller::-webkit-scrollbar { width: 4px; }
-        .scroller::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
-    </style>
-</head>
-<body class="font-display bg-background-light dark:bg-background-dark text-white min-h-screen mesh-gradient overflow-x-hidden pb-24">
+    <title>ScreenSort AI</title>
+    <link href="/manifest.json" rel="manifest">
+    <meta name="theme-color" content="#111318">
+    
+    <!-- CSS -->
+    <link href="/styles.css" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet" />
 
-    <!--Navbar -->
-    <nav class="sticky top-0 z-50 flex items-center justify-between px-6 pt-6 pb-4 backdrop-blur-md bg-background-dark/50">
-        <div class="flex items-center gap-3">
-            <div class="size-10 rounded-full glass flex items-center justify-center border border-white/20">
-                <span class="material-symbols-outlined text-primary text-xl">auto_awesome</span>
-            </div>
-            <h1 class="text-lg font-bold tracking-tight text-white">ScreenSort AI</h1>
+    <!-- Chart.js (Optional, failure won't break app structure) -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+    <!-- Top App Bar -->
+    <header style="position: sticky; top: 0; background: var(--md-sys-color-surface); z-index: 100; padding: 16px 20px; display: flex; align-items: center; justify-content: space-between;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <span class="material-symbols-outlined" style="color: var(--md-sys-color-primary);">auto_awesome</span>
+            <span class="md-title-large">ScreenSort</span>
         </div>
-        <div class="flex gap-4">
-             <button onclick="fetchData()" class="size-10 rounded-full glass flex items-center justify-center hover:bg-white/10 transition-colors">
-                <span class="material-symbols-outlined text-white/80">refresh</span>
+        <div id="header-actions">
+            <!-- Dynamic actions based on view -->
+            <button onclick="fetchData()" style="background: none; border: none; color: var(--md-sys-color-on-surface); cursor: pointer;">
+                <span class="material-symbols-outlined">refresh</span>
             </button>
         </div>
-    </nav>
+    </header>
 
-    <!-- Content Grid -->
-    <main class="px-6 space-y-6 max-w-4xl mx-auto">
+    <!-- VIEWS -->
+    <main id="main-content" style="padding: 0 16px 96px 16px;">
         
-        <!-- Row 1: Activity Chart & Category Doughnut -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            
-            <!-- Activity Chart -->
-            <div class="glass p-6 rounded-3xl flex flex-col">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-sm font-semibold text-white/90 uppercase tracking-wider">Activity</h3>
-                    <span class="text-xs text-white/40">Last 14 Days</span>
+        <!-- DASHBOARD VIEW -->
+        <div id="view-dashboard" class="view-section">
+            <!-- Stats Cards -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
+                <div class="md-card">
+                    <span class="md-body-medium">Total Items</span>
+                    <div style="font-size: 32px; font-weight: 700; color: var(--md-sys-color-primary);" id="stat-total">...</div>
                 </div>
-                <div class="flex-1 min-h-[200px] relative">
-                    <canvas id="activityChart"></canvas>
+                <div class="md-card">
+                    <span class="md-body-medium">Storage</span>
+                    <div style="font-size: 32px; font-weight: 700; color: var(--md-sys-color-tertiary);" id="stat-storage">...</div>
                 </div>
             </div>
 
-            <!-- Categories -->
-            <div class="glass p-6 rounded-3xl flex flex-col">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-sm font-semibold text-white/90 uppercase tracking-wider">Storage</h3>
-                    <span class="text-xs text-white/40">By Category</span>
-                </div>
-                <div class="flex-1 min-h-[200px] relative flex items-center justify-center">
-                    <canvas id="categoryChart"></canvas>
-                    <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
-                        <div class="text-center">
-                             <span id="total-count" class="text-3xl font-bold block">0</span>
-                             <span class="text-[10px] uppercase text-white/40 tracking-widest">Items</span>
-                        </div>
-                    </div>
-                </div>
+            <!-- Charts Area -->
+            <div class="md-card" style="margin-bottom: 16px; min-height: 200px;">
+                <canvas id="activityChart"></canvas>
+            </div>
+
+            <div class="md-card" style="margin-bottom: 16px; min-height: 200px;">
+                <canvas id="categoryChart"></canvas>
+            </div>
+
+            <!-- Recent Activity -->
+            <h3 class="md-title-large" style="margin-bottom: 12px;">Recent</h3>
+            <div id="recent-list" style="display: flex; flex-direction: column; gap: 12px;">
+                <!-- Recent items injected here -->
             </div>
         </div>
 
-        <!-- Row 2: Finance Bar Chart -->
-        <div class="glass p-6 rounded-3xl">
-             <div class="flex justify-between items-center mb-4">
-                <div class="flex items-center gap-2">
-                    <span class="material-symbols-outlined text-neon-lime">payments</span>
-                    <h3 class="text-sm font-semibold text-white/90 uppercase tracking-wider">Spending Tracker</h3>
-                </div>
-                <span class="text-xs text-white/40">Detected Amounts (Last 30 Days)</span>
-            </div>
-            <div class="h-[200px] w-full">
-                <canvas id="financeChart"></canvas>
+        <!-- GALLERY VIEW -->
+        <div id="view-gallery" class="view-section" style="display: none;">
+            <h3 class="md-title-large" style="margin-bottom: 16px;">Categories</h3>
+            <div id="category-list" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px;">
+                <!-- Categories injected here -->
             </div>
         </div>
 
-        <!-- Row 3: Recent Activity & Languages -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            
-            <!-- Recent List (Takes up 2 cols) -->
-            <div class="md:col-span-2 glass p-6 rounded-3xl flex flex-col">
-                 <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-sm font-semibold text-white/90 uppercase tracking-wider">Recent Analysis</h3>
-                </div>
-                <div id="recent-list" class="space-y-3 flex-1 overflow-y-auto max-h-[400px] scroller pr-2">
-                    <!-- JS Injected -->
-                    <div class="animate-pulse flex gap-3">
-                        <div class="size-12 bg-white/10 rounded-lg"></div>
-                        <div class="flex-1 space-y-2 py-1">
-                            <div class="h-3 bg-white/10 rounded w-1/2"></div>
-                            <div class="h-2 bg-white/10 rounded w-3/4"></div>
-                        </div>
-                    </div>
-                </div>
+        <!-- CATEGORY DETAILS VIEW (Hidden by default) -->
+        <div id="view-category-details" class="view-section" style="display: none;">
+            <div style="margin-bottom: 16px; display: flex; align-items: center; gap: 12px;">
+                <button onclick="switchView('view-gallery')" style="background:none; border:none; color: var(--md-sys-color-on-surface); cursor: pointer;">
+                    <span class="material-symbols-outlined">arrow_back</span>
+                </button>
+                <h3 id="cat-detail-title" class="md-title-large">Category</h3>
             </div>
+            <div id="cat-detail-grid" class="gallery-grid">
+                <!-- Images injected here -->
+            </div>
+        </div>
 
-            <!-- Language Stats (1 col) -->
-            <div class="glass p-6 rounded-3xl flex flex-col">
-                 <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-sm font-semibold text-white/90 uppercase tracking-wider">Languages</h3>
-                </div>
-                 <div class="flex-1 min-h-[150px] relative flex items-center justify-center">
-                    <canvas id="languageChart"></canvas>
-                </div>
-                <div id="lang-legend" class="mt-4 space-y-2 text-xs text-white/60">
-                    <!-- Legend -->
-                </div>
+        <!-- SETTINGS VIEW -->
+        <div id="view-settings" class="view-section" style="display: none;">
+             <div class="md-card">
+                <h3>App Info</h3>
+                <p class="md-body-medium">Version: 2.0 (Material)</p>
+                <p class="md-body-medium">Storage Path: /sdcard/Pictures/Screenshots</p>
             </div>
         </div>
 
     </main>
 
-    <!-- Search Overlay -->
-    <div id="search-overlay" class="fixed inset-0 z-[60] bg-background-dark/95 backdrop-blur-xl hidden flex-col p-6 animate-fade-in">
-        <div class="flex justify-between items-center mb-6">
-            <h2 class="text-2xl font-bold text-white">Search Vault</h2>
-            <button onclick="toggleSearch()" class="size-10 rounded-full glass flex items-center justify-center">
-                <span class="material-symbols-outlined text-white">close</span>
+    <!-- SEARCH OVERLAY (Full screen) -->
+    <div id="search-overlay" style="position: fixed; inset: 0; background: var(--md-sys-color-background); z-index: 200; padding: 16px; display: none; flex-direction: column;">
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+            <button onclick="toggleSearch()" style="background:none; border:none; color: var(--md-sys-color-on-surface);">
+                <span class="material-symbols-outlined">arrow_back</span>
             </button>
+            <input type="text" id="search-input" placeholder="Search text in screenshots..." 
+                   style="flex: 1; background: var(--md-sys-color-surface-container-high); border: none; padding: 12px 16px; border-radius: 24px; color: white; font-size: 16px; outline: none;">
         </div>
-        <div class="relative mb-6">
-            <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-white/50">search</span>
-            <input type="text" id="search-input" oninput="handleSearch(this.value)" 
-                   class="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-white placeholder-white/40 focus:outline-none focus:border-primary/50 transition-colors"
-                   placeholder="Search text, categories, amounts...">
-        </div>
-        <div id="search-results" class="flex-1 overflow-y-auto space-y-3"></div>
+        <div id="search-results" style="overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 12px;"></div>
     </div>
 
-    <!-- Bottom Nav -->
-    <nav class="fixed bottom-0 w-full px-6 pb-6 pt-4 backdrop-blur-2xl bg-background-dark/80 border-t border-white/5 flex justify-between items-center z-50">
-        <button class="flex flex-col items-center gap-1 group">
-            <span class="material-symbols-outlined text-primary fill-1">dashboard</span>
-            <span class="text-[10px] font-bold text-primary">Dash</span>
+    <!-- IMAGE VIEWER MODAL -->
+    <div id="image-viewer" style="position: fixed; inset: 0; background: black; z-index: 300; display: none; flex-direction: column; justify-content: center;">
+        <button onclick="closeImageViewer()" style="position: absolute; top: 16px; left: 16px; background: rgba(0,0,0,0.5); border: none; color: white; border-radius: 50%; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center;">
+            <span class="material-symbols-outlined">close</span>
         </button>
-        <button onclick="toggleSearch()" class="flex flex-col items-center gap-1 group opacity-60 hover:opacity-100 transition-opacity">
-            <span class="material-symbols-outlined text-white">search</span>
-            <span class="text-[10px] font-medium text-white">Search</span>
-        </button>
-        <div class="relative -top-6">
-            <button class="size-14 rounded-full bg-primary flex items-center justify-center shadow-xl shadow-primary/40 border-4 border-[#0f182a] active:scale-95 transition-transform">
-                <span class="material-symbols-outlined text-white text-3xl">add_a_photo</span>
-            </button>
+        <img id="viewer-img" src="" style="max-width: 100%; max-height: 80vh; object-fit: contain;">
+        <div id="viewer-details" style="padding: 16px; color: white; background: rgba(0,0,0,0.8); position: absolute; bottom: 0; width: 100%;">
+            <h4 id="viewer-filename" style="margin: 0 0 8px 0;">Filename</h4>
+            <p id="viewer-date" style="font-size: 12px; opacity: 0.7; margin: 0;">Date</p>
         </div>
-        <button class="flex flex-col items-center gap-1 group opacity-60 hover:opacity-100 transition-opacity">
-            <span class="material-symbols-outlined text-white">folder_open</span>
-            <span class="text-[10px] font-medium text-white">Files</span>
+    </div>
+
+    <!-- FAB -->
+    <button class="md-fab" onclick="toggleSearch()">
+        <span class="material-symbols-outlined">search</span>
+    </button>
+
+    <!-- Bottom Navigation -->
+    <nav class="md-navbar">
+        <button class="md-nav-item active" onclick="switchView('view-dashboard', this)">
+            <div class="icon-container"><span class="material-symbols-outlined">dashboard</span></div>
+            <span>Dash</span>
         </button>
-        <button class="flex flex-col items-center gap-1 group opacity-60 hover:opacity-100 transition-opacity">
-            <span class="material-symbols-outlined text-white">settings</span>
-            <span class="text-[10px] font-medium text-white">Config</span>
+        <button class="md-nav-item" onclick="switchView('view-gallery', this)">
+            <div class="icon-container"><span class="material-symbols-outlined">photo_library</span></div>
+            <span>Gallery</span>
+        </button>
+        <button class="md-nav-item" onclick="switchView('view-settings', this)">
+            <div class="icon-container"><span class="material-symbols-outlined">settings</span></div>
+            <span>Settings</span>
         </button>
     </nav>
 
-    <!-- JS Logic -->
     <script>
-        // --- Chart Configuration Defaults ---
-        Chart.defaults.color = 'rgba(255, 255, 255, 0.5)';
-        Chart.defaults.borderColor = 'rgba(255, 255, 255, 0.1)';
-        Chart.defaults.font.family = 'Inter';
+        // --- Navigation Logic ---
+        function switchView(viewId, navBtn) {
+            // Hide all views
+            document.querySelectorAll('.view-section').forEach(el => el.style.display = 'none');
+            // Show target
+            document.getElementById(viewId).style.display = 'block';
 
-        let charts = {}; // Store chart instances
+            // Update Nav State (if triggered by nav button)
+            if (navBtn) {
+                document.querySelectorAll('.md-nav-item').forEach(el => el.classList.remove('active'));
+                navBtn.classList.add('active');
+            }
+
+            // Special Logic
+            if (viewId === 'view-gallery') {
+                loadCategories();
+            }
+        }
+
+        function toggleSearch() {
+            const el = document.getElementById('search-overlay');
+            const isHidden = el.style.display === 'none';
+            el.style.display = isHidden ? 'flex' : 'none';
+            if (isHidden) document.getElementById('search-input').focus();
+        }
+
+        // --- Data Fetching ---
+        let dashboardData = null;
 
         async function fetchData() {
             try {
                 const res = await fetch('/api/dashboard');
-                const data = await res.json();
-                renderCharts(data);
-                renderRecent(data.recent);
+                dashboardData = await res.json();
+                renderDashboard(dashboardData);
             } catch (e) {
                 console.error("Fetch failed", e);
             }
         }
 
-        function renderCharts(data) {
-            // 1. Activity Chart (Line)
-            const ctxActivity = document.getElementById('activityChart').getContext('2d');
-            if (charts.activity) charts.activity.destroy();
-            
-            const gradientActivity = ctxActivity.createLinearGradient(0, 0, 0, 300);
-            gradientActivity.addColorStop(0, 'rgba(40, 119, 246, 0.5)');
-            gradientActivity.addColorStop(1, 'rgba(40, 119, 246, 0)');
+        function renderDashboard(data) {
+            // Stats
+            document.getElementById('stat-total').textContent = data.total_photos || 0;
+            document.getElementById('stat-storage').textContent = data.storage_usage || '0 MB';
 
-            charts.activity = new Chart(ctxActivity, {
+            // Recent List
+            const recentContainer = document.getElementById('recent-list');
+            recentContainer.innerHTML = data.recent.map(item => `
+                <div class="md-card md-card-clickable" onclick="openImage('${item.path}', '${item.name}', '${item.created_at}')" style="display: flex; gap: 16px; align-items: center; padding: 12px;">
+                    <div style="width: 56px; height: 56px; border-radius: 8px; background-image: url('/images/${item.path.split('/').pop()}'); background-size: cover; background-position: center; background-color: #333;"></div>
+                    <div style="flex: 1;">
+                        <div style="font-weight: 500; margin-bottom: 4px;">${item.category}</div>
+                        <div style="font-size: 12px; opacity: 0.7;">${new Date(item.created_at).toLocaleDateString()}</div>
+                    </div>
+                    ${item.amount ? `<div style="color: var(--md-sys-color-primary); font-weight: 700;">$${item.amount}</div>` : ''}
+                </div>
+            `).join('');
+
+            // Charts (Simplified)
+            if (window.Chart) {
+                renderCharts(data);
+            }
+        }
+
+        function renderCharts(data) {
+             const ctxActivity = document.getElementById('activityChart').getContext('2d');
+             if (window.chartActivity) window.chartActivity.destroy();
+             window.chartActivity = new Chart(ctxActivity, {
                 type: 'line',
                 data: {
-                    labels: data.activity.map(d => d.date.slice(5)), // Show MM-DD
+                    labels: data.activity.map(d => d.date.slice(5)),
                     datasets: [{
                         label: 'Screenshots',
                         data: data.activity.map(d => d.count),
-                        borderColor: '#2877f6',
-                        backgroundColor: gradientActivity,
-                        fill: true,
-                        tension: 0.4,
-                        pointRadius: 4,
-                        pointBackgroundColor: '#0f182a',
-                        pointBorderColor: '#2877f6',
-                        pointBorderWidth: 2
+                        borderColor: '#a8c7fa',
+                        tension: 0.4
                     }]
                 },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        y: { beginAtZero: true, grid: { borderDash: [4, 4] } },
-                        x: { grid: { display: false } }
-                    }
-                }
-            });
+                options: { responsive: true, plugins: { legend: { display: false } } }
+             });
 
-            // 2. Category Chart (Doughnut)
-            const ctxCat = document.getElementById('categoryChart').getContext('2d');
-            if (charts.category) charts.category.destroy();
-            
-            const catColors = ['#2877f6', '#bc13fe', '#39ff14', '#facc15', '#f87171', '#a8a29e'];
-            const totalItems = data.categories.reduce((acc, c) => acc + c.count, 0);
-            document.getElementById('total-count').textContent = totalItems;
-
-            charts.category = new Chart(ctxCat, {
+             const ctxCat = document.getElementById('categoryChart').getContext('2d');
+             if (window.chartCat) window.chartCat.destroy();
+             window.chartCat = new Chart(ctxCat, {
                 type: 'doughnut',
                 data: {
                     labels: data.categories.map(c => c.name),
                     datasets: [{
                         data: data.categories.map(c => c.count),
-                        backgroundColor: catColors,
-                        borderWidth: 0,
-                        hoverOffset: 10
+                        backgroundColor: ['#a8c7fa', '#bec6dc', '#ddbce0', '#ffb4ab'],
+                        borderWidth: 0
                     }]
                 },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    cutout: '75%',
-                    plugins: { legend: { display: false } }
-                }
-            });
-
-            // 3. Finance Chart (Bar)
-            const ctxFin = document.getElementById('financeChart').getContext('2d');
-            if (charts.finance) charts.finance.destroy();
-            
-            charts.finance = new Chart(ctxFin, {
-                type: 'bar',
-                data: {
-                    labels: data.finance.map(d => d.date.slice(5)),
-                    datasets: [{
-                        label: 'Spending',
-                        data: data.finance.map(d => d.total),
-                        backgroundColor: '#39ff14',
-                        borderRadius: 4,
-                        barThickness: 12
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        y: { 
-                            beginAtZero: true, 
-                            grid: { borderDash: [4, 4] },
-                            ticks: { callback: (val) => '$' + val }
-                        },
-                        x: { grid: { display: false } }
-                    }
-                }
-            });
-
-            // 4. Language Chart (Pie)
-            const ctxLang = document.getElementById('languageChart').getContext('2d');
-            if (charts.language) charts.language.destroy();
-            
-            if (data.languages && data.languages.length > 0) {
-                 charts.language = new Chart(ctxLang, {
-                    type: 'pie',
-                    data: {
-                        labels: data.languages.map(l => l.lang || 'Unknown'),
-                        datasets: [{
-                            data: data.languages.map(l => l.count),
-                            backgroundColor: ['#f472b6', '#60a5fa', '#34d399', '#fbbf24'],
-                            borderWidth: 0
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: { legend: { position: 'right', labels: { boxWidth: 10, font: { size: 10 } } } }
-                    }
-                });
-            } else {
-                // Show placeholder if no languages
-                 // ctxLang.canvas.parentNode.innerHTML = '<div class="text-xs text-white/30">No translations yet</div>';
-            }
+                options: { responsive: true, plugins: { legend: { display: false } } }
+             });
         }
 
-        function renderRecent(items) {
-            const list = document.getElementById('recent-list');
-            if (!items || items.length === 0) {
-                list.innerHTML = '<div class="text-center text-white/30 text-sm">No recent files</div>';
-                return;
-            }
-
-            list.innerHTML = items.map(item => `
-                <div class="glass p-3 rounded-xl flex gap-3 items-start group hover:bg-white/5 transition-colors cursor-pointer">
-                    <div class="size-14 rounded-lg bg-center bg-cover border border-white/10 flex-shrink-0 relative overflow-hidden" 
-                         style="background-image: url('${item.path.replace("'", "\'"')}')">
-                         ${item.is_video ? '<div class="absolute inset-0 flex items-center justify-center bg-black/30"><span class="material-symbols-outlined text-white text-sm">play_circle</span></div>' : ''}
-                    </div>
-                    <div class="flex-1 min-w-0">
-                        <div class="flex justify-between items-center">
-                            <h4 class="text-white font-medium text-sm truncate pr-2">${item.ai_summary || item.category}</h4>
-                            <span class="text-[10px] text-white/40 whitespace-nowrap">${new Date(item.created_at).toLocaleDateString()}</span>
-                        </div>
-                        <p class="text-xs text-white/50 line-clamp-1 mt-0.5">${item.text_preview || "No text detected"}</p>
-                        <div class="flex items-center gap-2 mt-1.5">
-                            <span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-white/10 text-white/70 uppercase tracking-wide">${item.category}</span>
-                            ${item.amount ? `<span class="text-neon-lime text-[10px] font-bold">$${item.amount}</span>` : ''}
-                        </div>
-                    </div>
+        function loadCategories() {
+            if (!dashboardData || !dashboardData.categories) return;
+            const container = document.getElementById('category-list');
+            container.innerHTML = dashboardData.categories.map(cat => `
+                <div class="md-card md-card-clickable" onclick="openCategory('${cat.name}')" style="display: flex; flex-direction: column; align-items: center; justify-content: center; aspect-ratio: 1; text-align: center;">
+                    <span class="material-symbols-outlined" style="font-size: 32px; margin-bottom: 8px; color: var(--md-sys-color-primary);">folder</span>
+                    <div style="font-weight: 500;">${cat.name}</div>
+                    <div style="font-size: 12px; opacity: 0.7;">${cat.count} items</div>
                 </div>
             `).join('');
         }
 
-        // Search Logic (Reused)
-        function toggleSearch() {
-            const overlay = document.getElementById('search-overlay');
-            overlay.classList.toggle('hidden');
-            overlay.classList.toggle('flex');
-            if(!overlay.classList.contains('hidden')) document.getElementById('search-input').focus();
-        }
+        async function openCategory(name) {
+            document.getElementById('cat-detail-title').textContent = name;
+            switchView('view-category-details');
+            
+            const grid = document.getElementById('cat-detail-grid');
+            grid.innerHTML = '<div style="padding: 20px;">Loading...</div>';
 
-        let searchTimeout;
-        function handleSearch(query) {
-            clearTimeout(searchTimeout);
-            const resultsDiv = document.getElementById('search-results');
-            if (!query || query.length < 2) {
-                resultsDiv.innerHTML = ''; return;
+            try {
+                const res = await fetch(`/api/category/${name}`);
+                const data = await res.json();
+                grid.innerHTML = data.files.map(file => `
+                    <div class="gallery-item" onclick="openImage('/images/${name}/${file}', '${file}', '')">
+                        <img src="/images/${name}/${file}" loading="lazy">
+                    </div>
+                `).join('');
+            } catch (e) {
+                grid.innerHTML = 'Error loading category.';
             }
-            resultsDiv.innerHTML = '<div class="text-center text-white/50 mt-4">Searching...</div>';
-            searchTimeout = setTimeout(async () => {
-                try {
-                    const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
-                    const items = await res.json();
-                    if (items.length === 0) {
-                        resultsDiv.innerHTML = '<div class="text-center text-white/50 mt-10">No matches found.</div>';
-                        return;
-                    }
-                    resultsDiv.innerHTML = items.map(item => `
-                        <div class="glass p-3 rounded-xl flex gap-3 items-start animate-fade-in">
-                            <div class="size-16 rounded-lg bg-center bg-cover flex-shrink-0 bg-white/5" 
-                                 style="background-image: url('${item.path.replace("'", "\'"')}')">
-                            </div>
-                            <div class="flex-1 min-w-0">
-                                <div class="flex justify-between">
-                                    <h4 class="text-white font-medium text-sm truncate">${item.category}</h4>
-                                    ${item.amount ? `<span class="text-neon-lime text-xs font-bold">$${item.amount}</span>` : ''}
-                                </div>
-                                <p class="text-white/40 text-xs mt-1 line-clamp-2">${item.text_snippet || 'No text content'}</p>
-                            </div>
-                        </div>
-                    `).join('');
-                } catch (e) {}
-            }, 500);
         }
 
-        // Init
-        fetchData();
+        function openImage(path, name, date) {
+            // Fix path if it's full path
+            let src = path;
+            if (!src.startsWith('/')) src = '/images/' + path.split('/').pop(); // Simplified fallback
+            // Actually, if we are in category view, path is constructed. 
+            // Let's rely on the passed path being usable or relative.
+            
+            // If the path from API (recent) is full path "/sdcard/...", we need to map it to our static route.
+            // Our server serves "/sdcard/Pictures/Screenshots" at "/images".
+            // So if path is "/sdcard/Pictures/Screenshots/Finance/img.jpg", src should be "/images/Finance/img.jpg".
+            if (path.includes('/sdcard/Pictures/Screenshots/')) {
+                 src = path.replace('/sdcard/Pictures/Screenshots/', '/images/');
+            }
+            
+            document.getElementById('viewer-img').src = src;
+            document.getElementById('viewer-filename').textContent = name;
+            document.getElementById('viewer-date').textContent = date || '';
+            document.getElementById('image-viewer').style.display = 'flex';
+        }
 
-        // Service Worker Registration
+        function closeImageViewer() {
+            document.getElementById('image-viewer').style.display = 'none';
+        }
+
+        // Search Logic
+        document.getElementById('search-input').addEventListener('input', async (e) => {
+            const q = e.target.value;
+            if (q.length < 2) return;
+            const res = await fetch(`/api/search?q=${q}`);
+            const data = await res.json();
+            document.getElementById('search-results').innerHTML = data.map(item => `
+                <div class="md-card md-card-clickable" onclick="openImage('${item.path}', '${item.category}', '')">
+                    <div style="font-weight: 500;">${item.category}</div>
+                    <div style="font-size: 12px; opacity: 0.7;">${item.text_snippet || 'No text'}</div>
+                </div>
+            `).join('');
+        });
+
+        // Initialize
+        fetchData();
+        
+        // Service Worker
         if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/service-worker.js')
-                    .then(reg => console.log('Service Worker registered successfully:', reg.scope))
-                    .catch(err => console.log('Service Worker registration failed:', err));
-            });
+            navigator.serviceWorker.register('/service-worker.js');
         }
     </script>
 </body>
