@@ -4,6 +4,7 @@ import json
 import os
 import shutil
 import csv
+import base64
 from datetime import datetime
 
 # Resolve DB path relative to this script (one level up)
@@ -442,6 +443,39 @@ def save_categories(cats_json):
     except Exception as e:
         print(json.dumps({"error": str(e)}))
 
+def save_image_data(filename, b64_data):
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("SELECT path, category FROM screenshots WHERE filename = ?", (filename,))
+    row = c.fetchone()
+    if not row:
+        print(json.dumps({"error": "File not found"}))
+        return
+        
+    path = row['path']
+    category = row['category']
+    
+    try:
+        # b64_data might have header "data:image/png;base64,..."
+        if "," in b64_data:
+            b64_data = b64_data.split(",")[1]
+            
+        with open(path, "wb") as f:
+            f.write(base64.b64decode(b64_data))
+            
+        # Regenerate thumbnail
+        sys.path.append(os.path.join(BASE_DIR, ".."))
+        try:
+            import sort_screenshots
+            sort_screenshots.SOURCE_DIR = SCREENSHOTS_DIR
+            sort_screenshots.generate_thumbnail(path, category)
+        except Exception as e:
+            pass # Ignore import errors
+            
+        print(json.dumps({"success": True}))
+    except Exception as e:
+        print(json.dumps({"error": str(e)}))
+
 def main():
     if len(sys.argv) < 2:
         print(json.dumps({"error": "No command provided"}))
@@ -493,6 +527,11 @@ def main():
             print(json.dumps({"error": "Missing config JSON"}))
         else:
             save_categories(sys.argv[2])
+    elif command == "save_image_data":
+        if len(sys.argv) < 4:
+            print(json.dumps({"error": "Missing filename or data"}))
+        else:
+            save_image_data(sys.argv[2], sys.argv[3])
     else:
         print(json.dumps({"error": "Unknown command"}))
 

@@ -9,7 +9,7 @@ const PORT = 4000;
 const SCREENSHOTS_DIR = '/sdcard/Pictures/Screenshots';
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '50mb' }));
 app.use(express.static('public'));
 app.use('/images', express.static(SCREENSHOTS_DIR));
 app.use('/thumbnails', express.static(path.join(SCREENSHOTS_DIR, '.thumbs')));
@@ -160,6 +160,20 @@ app.post('/api/categories', async (req, res) => {
         if (!categories) return res.status(400).json({ error: 'Missing categories' });
         
         const result = await runBridge('save_categories', [JSON.stringify(categories)]);
+        if (result.error) return res.status(500).json(result);
+        res.json(result);
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ error: e.toString() });
+    }
+});
+
+app.post('/api/save-image', async (req, res) => {
+    try {
+        const { filename, image_data } = req.body;
+        if (!filename || !image_data) return res.status(400).json({ error: 'Missing data' });
+        
+        const result = await runBridge('save_image_data', [filename, image_data]);
         if (result.error) return res.status(500).json(result);
         res.json(result);
     } catch (e) {

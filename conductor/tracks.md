@@ -25,5 +25,8 @@ This file tracks all major tracks for the project. Each track has its own detail
 ## [x] Track: Custom User Categories
 *Link: [./conductor/tracks/custom_categories_20260205/](./conductor/tracks/custom_categories_20260205/)*
 
-## [ ] Track: Thumbnail Generation
+## [x] Track: Thumbnail Generation
 *Link: [./conductor/tracks/thumbnails_20260205/](./conductor/tracks/thumbnails_20260205/)*
+
+## [ ] Track: Image Editing Tools
+*Link: [./conductor/tracks/image_editing_20260205/](./conductor/tracks/image_editing_20260205/)*
