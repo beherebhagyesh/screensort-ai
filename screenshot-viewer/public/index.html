@@ -74,11 +74,21 @@
 
         <!-- CATEGORY DETAILS VIEW (Hidden by default) -->
         <div id="view-category-details" class="view-section" style="display: none;">
-            <div style="margin-bottom: 16px; display: flex; align-items: center; gap: 12px;">
-                <button onclick="switchView('view-gallery')" style="background:none; border:none; color: var(--md-sys-color-on-surface); cursor: pointer;">
-                    <span class="material-symbols-outlined">arrow_back</span>
-                </button>
-                <h3 id="cat-detail-title" class="md-title-large">Category</h3>
+            <div style="margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between;">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <button onclick="switchView('view-gallery')" style="background:none; border:none; color: var(--md-sys-color-on-surface); cursor: pointer;">
+                        <span class="material-symbols-outlined">arrow_back</span>
+                    </button>
+                    <h3 id="cat-detail-title" class="md-title-large">Category</h3>
+                </div>
+                <select id="sort-select" onchange="openCategory(document.getElementById('cat-detail-title').textContent, this.value)" 
+                        style="background: var(--md-sys-color-surface-container-high); color: var(--md-sys-color-on-surface); border: none; padding: 8px 12px; border-radius: 8px; font-size: 14px; outline: none;">
+                    <option value="date_desc">Newest First</option>
+                    <option value="date_asc">Oldest First</option>
+                    <option value="name_asc">Name (A-Z)</option>
+                    <option value="name_desc">Name (Z-A)</option>
+                    <option value="amount_desc">Highest Amount</option>
+                </select>
             </div>
             <div id="cat-detail-grid" class="gallery-grid">
                 <!-- Images injected here -->
@@ -268,22 +278,37 @@
             `).join('');
         }
 
-        async function openCategory(name) {
+        async function openCategory(name, sort = 'date_desc') {
             document.getElementById('cat-detail-title').textContent = name;
+            // Update select value if called programmatically
+            document.getElementById('sort-select').value = sort;
+            
             switchView('view-category-details');
             
             const grid = document.getElementById('cat-detail-grid');
             grid.innerHTML = '<div style="padding: 20px;">Loading...</div>';
 
             try {
-                const res = await fetch(`/api/category/${name}`);
+                const res = await fetch(`/api/category/${name}?sort=${sort}`);
                 const data = await res.json();
-                grid.innerHTML = data.files.map(file => `
-                    <div class="gallery-item" onclick="openImage('/images/${name}/${file}', '${file}', '')">
-                        <img src="/images/${name}/${file}" loading="lazy">
+                
+                if (data.files.length === 0) {
+                     grid.innerHTML = '<div style="padding: 20px; text-align: center; opacity: 0.5;">No images found</div>';
+                     return;
+                }
+
+                grid.innerHTML = data.files.map(file => {
+                    // Safe AI Summary for onclick
+                    const safeSum = (file.ai_summary || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                    
+                    return `
+                    <div class="gallery-item" onclick="openImage('${file.path}', '${file.name}', '${file.created_at}', '${safeSum}')">
+                        <img src="${file.path}" loading="lazy">
+                        ${file.amount ? `<div style="position: absolute; bottom: 4px; right: 4px; background: rgba(0,0,0,0.7); color: #39ff14; font-size: 10px; padding: 2px 4px; border-radius: 4px; font-weight: bold;">$${file.amount}</div>` : ''}
                     </div>
-                `).join('');
+                `}).join('');
             } catch (e) {
+                console.error(e);
                 grid.innerHTML = 'Error loading category.';
             }
         }
