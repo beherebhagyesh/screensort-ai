@@ -169,6 +169,42 @@ def compute_dhash(image_path, hash_size=8):
         return None
 
 
+def generate_thumbnail(image_path, category):
+    """Generate a thumbnail for the image."""
+    try:
+        if is_video_file(image_path):
+            return 
+            
+        filename = os.path.basename(image_path)
+        thumb_dir = os.path.join(SOURCE_DIR, ".thumbs", category)
+        os.makedirs(thumb_dir, exist_ok=True)
+        thumb_path = os.path.join(thumb_dir, filename)
+        
+        if os.path.exists(thumb_path):
+            return
+
+        img = Image.open(image_path)
+        if img.mode in ('RGBA', 'P'):
+            img = img.convert('RGB')
+        img.thumbnail((300, 300))
+        img.save(thumb_path, "JPEG", quality=60)
+        
+    except Exception as e:
+        logging.warning(f"Thumbnail generation failed for {image_path}: {e}")
+
+
+def process_thumbnail_backfill(conn, limit=20):
+    """Backfill thumbnails."""
+    cursor = conn.cursor()
+    # Check recent files first
+    cursor.execute("SELECT filename, path, category FROM screenshots WHERE is_video=0 ORDER BY created_at DESC LIMIT ?", (limit,))
+    rows = cursor.fetchall()
+    
+    for fname, path, cat in rows:
+        if os.path.exists(path):
+            generate_thumbnail(path, cat)
+
+
 def get_llm():
     """Lazy-load the Moondream2 LLM. Returns None if AI is disabled."""
     global _llm_instance
@@ -677,6 +713,9 @@ def process_files(conn):
                     except Exception as e:
                         logging.error(f"Failed to move {filename}: {e}")
 
+                if not is_video:
+                    generate_thumbnail(final_path, effective_category)
+
                 try:
                     created_at = int(os.path.getmtime(final_path) * 1000)
                     now_ms = int(time.time() * 1000)
@@ -805,6 +844,7 @@ def run_continuous(interval=60):
             load_categories()
             process_files(conn)
             process_phash_backfill(conn, limit=50) # Always run phash backfill
+            process_thumbnail_backfill(conn, limit=20)
             if AI_ENABLED:
                 process_ai_backfill(conn, limit=3)
             if AI_OCR_ENABLED:

@@ -12,6 +12,7 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
 app.use('/images', express.static(SCREENSHOTS_DIR));
+app.use('/thumbnails', express.static(path.join(SCREENSHOTS_DIR, '.thumbs')));
 
 // Helper to run Python bridge
 function runBridge(command, args = []) {
