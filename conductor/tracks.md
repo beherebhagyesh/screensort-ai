@@ -10,5 +10,8 @@ This file tracks all major tracks for the project. Each track has its own detail
 ## [x] Track: Multi-Source Scanning Support
 *Link: [./conductor/tracks/multi_source_scanning_20260205/](./conductor/tracks/multi_source_scanning_20260205/)*
 
-## [ ] Track: Manual Categorization & Corrections (UI)
+## [x] Track: Manual Categorization & Corrections (UI)
 *Link: [./conductor/tracks/manual_corrections_20260205/](./conductor/tracks/manual_corrections_20260205/)*
+
+## [ ] Track: Advanced Search & Filtering
+*Link: [./conductor/tracks/advanced_search_20260205/](./conductor/tracks/advanced_search_20260205/)*

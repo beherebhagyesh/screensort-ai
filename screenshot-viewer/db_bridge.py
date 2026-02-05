@@ -3,6 +3,7 @@ import sys
 import json
 import os
 import shutil
+from datetime import datetime
 
 # Resolve DB path relative to this script (one level up)
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -178,14 +179,57 @@ def get_dashboard_data():
         "recent": recent
     }))
 
-def search(query):
+def search(query, filters_json="{}"):
+    try:
+        filters = json.loads(filters_json)
+    except:
+        filters = {}
+
     conn = get_db()
     c = conn.cursor()
     
-    # Full text search (simple LIKE for now)
-    sql = "SELECT * FROM screenshots WHERE text LIKE ? OR category LIKE ? ORDER BY created_at DESC LIMIT 50"
+    # Base query
+    sql = "SELECT * FROM screenshots WHERE (text LIKE ? OR category LIKE ? OR ai_summary LIKE ?)"
     term = f"%{query}%"
-    c.execute(sql, (term, term))
+    params = [term, term, term]
+    
+    # Apply filters
+    if filters.get('category') and filters['category'] != "":
+        sql += " AND category = ?"
+        params.append(filters['category'])
+        
+    if filters.get('minAmount'):
+        try:
+            sql += " AND amount >= ?"
+            params.append(float(filters['minAmount']))
+        except ValueError: pass
+        
+    if filters.get('maxAmount'):
+        try:
+            sql += " AND amount <= ?"
+            params.append(float(filters['maxAmount']))
+        except ValueError: pass
+        
+    if filters.get('startDate'):
+        try:
+            dt = datetime.strptime(filters['startDate'], "%Y-%m-%d")
+            ts = int(dt.timestamp() * 1000)
+            sql += " AND created_at >= ?"
+            params.append(ts)
+        except ValueError: pass
+        
+    if filters.get('endDate'):
+        try:
+            dt = datetime.strptime(filters['endDate'], "%Y-%m-%d")
+            dt = dt.replace(hour=23, minute=59, second=59)
+            ts = int(dt.timestamp() * 1000)
+            sql += " AND created_at <= ?"
+            params.append(ts)
+        except ValueError: pass
+
+    sql += " ORDER BY created_at DESC LIMIT 50"
+    
+    c.execute(sql, params)
     
     results = []
     for r in c.fetchall():
@@ -244,7 +288,9 @@ def main():
         if len(sys.argv) < 3:
             print(json.dumps([]))
         else:
-            search(sys.argv[2])
+            query = sys.argv[2]
+            filters = sys.argv[3] if len(sys.argv) > 3 else "{}"
+            search(query, filters)
     elif command == "get_category_files":
         if len(sys.argv) < 3:
             print(json.dumps({"error": "Missing category"}))

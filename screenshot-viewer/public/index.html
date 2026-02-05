@@ -112,9 +112,34 @@
             <button onclick="toggleSearch()" style="background:none; border:none; color: var(--md-sys-color-on-surface);">
                 <span class="material-symbols-outlined">arrow_back</span>
             </button>
-            <input type="text" id="search-input" placeholder="Search text in screenshots..." 
+            <input type="text" id="search-input" placeholder="Search..." 
                    style="flex: 1; background: var(--md-sys-color-surface-container-high); border: none; padding: 12px 16px; border-radius: 24px; color: white; font-size: 16px; outline: none;">
+            <button onclick="toggleFilters()" style="background: var(--md-sys-color-surface-container-high); border: none; padding: 10px; border-radius: 50%; color: var(--md-sys-color-primary); cursor: pointer;">
+                <span class="material-symbols-outlined">tune</span>
+            </button>
         </div>
+
+        <!-- Filter Panel -->
+        <div id="filter-panel" style="display: none; background: var(--md-sys-color-surface-container); padding: 16px; border-radius: 12px; margin-bottom: 16px; gap: 12px; flex-direction: column;">
+             <div style="display: flex; gap: 8px;">
+                 <select id="filter-category" onchange="performSearch()" style="flex: 1; background: #333; color: white; border: 1px solid #555; padding: 8px; border-radius: 8px;">
+                     <option value="">All Categories</option>
+                 </select>
+             </div>
+             <div style="display: flex; gap: 8px; align-items: center;">
+                 <span style="font-size: 12px; width: 40px; color: #aaa;">Date:</span>
+                 <input type="date" id="filter-date-start" onchange="performSearch()" style="flex: 1; background: #333; color: white; border: 1px solid #555; padding: 8px; border-radius: 8px;">
+                 <span style="color: #aaa;">-</span>
+                 <input type="date" id="filter-date-end" onchange="performSearch()" style="flex: 1; background: #333; color: white; border: 1px solid #555; padding: 8px; border-radius: 8px;">
+             </div>
+             <div style="display: flex; gap: 8px; align-items: center;">
+                 <span style="font-size: 12px; width: 40px; color: #aaa;">$$$:</span>
+                 <input type="number" id="filter-amount-min" placeholder="Min" onchange="performSearch()" style="flex: 1; background: #333; color: white; border: 1px solid #555; padding: 8px; border-radius: 8px;">
+                 <span style="color: #aaa;">-</span>
+                 <input type="number" id="filter-amount-max" placeholder="Max" onchange="performSearch()" style="flex: 1; background: #333; color: white; border: 1px solid #555; padding: 8px; border-radius: 8px;">
+             </div>
+        </div>
+
         <div id="search-results" style="overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 12px;"></div>
     </div>
 
@@ -416,19 +441,72 @@
             document.getElementById('image-viewer').style.display = 'none';
         }
 
+        function toggleFilters() {
+            const el = document.getElementById('filter-panel');
+            el.style.display = el.style.display === 'none' ? 'flex' : 'none';
+            
+            // Populate categories if empty
+            const catSelect = document.getElementById('filter-category');
+            if (catSelect.options.length <= 1 && dashboardData && dashboardData.categories) {
+                dashboardData.categories.forEach(c => {
+                    const opt = document.createElement('option');
+                    opt.value = c.name;
+                    opt.textContent = c.name;
+                    catSelect.appendChild(opt);
+                });
+            }
+        }
+
+        async function performSearch() {
+            const q = document.getElementById('search-input').value;
+            const category = document.getElementById('filter-category').value;
+            const startDate = document.getElementById('filter-date-start').value;
+            const endDate = document.getElementById('filter-date-end').value;
+            const minAmount = document.getElementById('filter-amount-min').value;
+            const maxAmount = document.getElementById('filter-amount-max').value;
+            
+            // Allow empty query if filters are set
+            const hasFilters = category || startDate || endDate || minAmount || maxAmount;
+            if (q.length < 2 && !hasFilters) {
+                 document.getElementById('search-results').innerHTML = '';
+                 return;
+            }
+
+            const params = new URLSearchParams({
+                q: q,
+                category: category,
+                startDate: startDate,
+                endDate: endDate,
+                minAmount: minAmount,
+                maxAmount: maxAmount
+            });
+
+            try {
+                const res = await fetch(`/api/search?${params.toString()}`);
+                const data = await res.json();
+                
+                if (data.length === 0) {
+                     document.getElementById('search-results').innerHTML = '<div style="text-align:center; opacity:0.5; padding:20px;">No results found</div>';
+                     return;
+                }
+
+                document.getElementById('search-results').innerHTML = data.map(item => `
+                    <div class="md-card md-card-clickable" onclick="openImage('${item.path}', '${item.filename}', '${item.created_at}', '', '${item.category}')">
+                        <div style="display:flex; justify-content:space-between;">
+                            <div style="font-weight: 500;">${item.category}</div>
+                            ${item.amount ? `<div style="color:var(--md-sys-color-primary); font-weight:700;">$${item.amount}</div>` : ''}
+                        </div>
+                        <div style="font-size: 12px; opacity: 0.7;">${item.text_snippet || 'No text'}</div>
+                        <div style="font-size: 10px; opacity: 0.5; margin-top:4px;">${new Date(item.created_at).toLocaleDateString()}</div>
+                    </div>
+                `).join('');
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
         // Search Logic
-        document.getElementById('search-input').addEventListener('input', async (e) => {
-            const q = e.target.value;
-            if (q.length < 2) return;
-            const res = await fetch(`/api/search?q=${q}`);
-            const data = await res.json();
-            document.getElementById('search-results').innerHTML = data.map(item => `
-                <div class="md-card md-card-clickable" onclick="openImage('${item.path}', '${item.filename}', '${item.created_at}', '', '${item.category}')">
-                    <div style="font-weight: 500;">${item.category}</div>
-                    <div style="font-size: 12px; opacity: 0.7;">${item.text_snippet || 'No text'}</div>
-                </div>
-            `).join('');
-        });
+        document.getElementById('search-input').addEventListener('input', performSearch);
 
         // Initialize
         fetchData();
