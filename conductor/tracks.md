@@ -13,5 +13,8 @@ This file tracks all major tracks for the project. Each track has its own detail
 ## [x] Track: Manual Categorization & Corrections (UI)
 *Link: [./conductor/tracks/manual_corrections_20260205/](./conductor/tracks/manual_corrections_20260205/)*
 
-## [ ] Track: Advanced Search & Filtering
+## [x] Track: Advanced Search & Filtering
 *Link: [./conductor/tracks/advanced_search_20260205/](./conductor/tracks/advanced_search_20260205/)*
+
+## [ ] Track: Smart Expense Export
+*Link: [./conductor/tracks/expense_export_20260205/](./conductor/tracks/expense_export_20260205/)*

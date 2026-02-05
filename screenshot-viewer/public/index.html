@@ -48,6 +48,12 @@
                 </div>
             </div>
 
+            <!-- Export Button -->
+            <button onclick="openExportModal()" style="width: 100%; margin-bottom: 16px; background: var(--md-sys-color-surface-container-high); border: 1px solid var(--md-sys-color-outline-variant); color: var(--md-sys-color-primary); padding: 12px; border-radius: 12px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                <span class="material-symbols-outlined">download</span>
+                Export Monthly Expenses
+            </button>
+
             <!-- Charts Area -->
             <div class="md-card" style="margin-bottom: 16px; min-height: 200px;">
                 <canvas id="activityChart"></canvas>
@@ -163,6 +169,19 @@
                         Move
                     </button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- EXPORT MODAL -->
+    <div id="export-modal" style="position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 400; display: none; align-items: center; justify-content: center;">
+        <div class="md-card" style="width: 300px; display: flex; flex-direction: column; gap: 16px;">
+            <h3 class="md-title-large">Export Expenses</h3>
+            <p>Select month to export CSV:</p>
+            <input type="month" id="export-month-input" style="padding: 12px; border-radius: 8px; border: 1px solid #555; background: #333; color: white;">
+            <div style="display: flex; gap: 8px; justify-content: flex-end;">
+                <button onclick="closeExportModal()" style="background: none; border: none; color: white; padding: 8px 16px; cursor: pointer;">Cancel</button>
+                <button onclick="runExport()" id="export-confirm-btn" style="background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary); border: none; padding: 8px 16px; border-radius: 20px; font-weight: 600; cursor: pointer;">Export</button>
             </div>
         </div>
     </div>
@@ -507,6 +526,50 @@
 
         // Search Logic
         document.getElementById('search-input').addEventListener('input', performSearch);
+
+        function openExportModal() {
+            document.getElementById('export-modal').style.display = 'flex';
+            // Default to current month
+            const now = new Date();
+            const monthStr = now.toISOString().slice(0, 7);
+            document.getElementById('export-month-input').value = monthStr;
+        }
+
+        function closeExportModal() {
+            document.getElementById('export-modal').style.display = 'none';
+        }
+
+        async function runExport() {
+            const month = document.getElementById('export-month-input').value;
+            if (!month) return;
+
+            const btn = document.getElementById('export-confirm-btn');
+            const oldText = btn.textContent;
+            btn.textContent = 'Exporting...';
+            btn.disabled = true;
+
+            try {
+                const res = await fetch('/api/export', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ month: month })
+                });
+                const result = await res.json();
+                
+                if (result.success) {
+                    alert(`Export successful!\nFound ${result.count} items.\nSaved to: ${result.path}`);
+                    closeExportModal();
+                } else {
+                    alert('Error: ' + (result.error || 'Unknown error'));
+                }
+            } catch (e) {
+                console.error(e);
+                alert('Export failed');
+            } finally {
+                btn.textContent = oldText;
+                btn.disabled = false;
+            }
+        }
 
         // Initialize
         fetchData();

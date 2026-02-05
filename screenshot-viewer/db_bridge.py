@@ -3,6 +3,7 @@ import sys
 import json
 import os
 import shutil
+import csv
 from datetime import datetime
 
 # Resolve DB path relative to this script (one level up)
@@ -273,6 +274,62 @@ def get_category_files(category, sort_by="date_desc"):
     
     print(json.dumps({"files": files}))
 
+def export_expenses(year_month):
+    # year_month format: "YYYY-MM"
+    try:
+        dt = datetime.strptime(year_month, "%Y-%m")
+        year = dt.year
+        month = dt.month
+        
+        start_ts = int(dt.timestamp() * 1000)
+        
+        # Next month calculation
+        if month == 12:
+            next_month_dt = datetime(year + 1, 1, 1)
+        else:
+            next_month_dt = datetime(year, month + 1, 1)
+            
+        end_ts = int(next_month_dt.timestamp() * 1000) - 1
+        
+        conn = get_db()
+        c = conn.cursor()
+        
+        c.execute('''SELECT * FROM screenshots 
+                     WHERE category='Finance' 
+                     AND created_at BETWEEN ? AND ? 
+                     ORDER BY created_at ASC''', (start_ts, end_ts))
+                     
+        rows = c.fetchall()
+        
+        # Ensure export dir
+        export_dir = os.path.join(SCREENSHOTS_DIR, "Exports")
+        os.makedirs(export_dir, exist_ok=True)
+        
+        filename = f"expenses_{year_month}.csv"
+        filepath = os.path.join(export_dir, filename)
+        
+        with open(filepath, 'w', newline='') as csvfile:
+            writer = csv.writer(csvfile)
+            writer.writerow(['Date', 'Amount', 'Filename', 'Summary', 'Text Snippet'])
+            
+            for r in rows:
+                date_str = datetime.fromtimestamp(r['created_at'] / 1000).strftime('%Y-%m-%d %H:%M:%S')
+                writer.writerow([
+                    date_str,
+                    r['amount'] if r['amount'] else 0,
+                    r['filename'],
+                    r['ai_summary'] or "",
+                    (r['text'] or "")[:100].replace('\n', ' ')
+                ])
+                
+        # Return path relative to public dir if possible, or absolute
+        # Web viewer serves /images mapped to SCREENSHOTS_DIR
+        web_path = f"/images/Exports/{filename}"
+        print(json.dumps({"success": True, "path": filepath, "url": web_path, "count": len(rows)}))
+        
+    except Exception as e:
+        print(json.dumps({"error": str(e)}))
+
 def main():
     if len(sys.argv) < 2:
         print(json.dumps({"error": "No command provided"}))
@@ -305,6 +362,11 @@ def main():
             filename = sys.argv[2]
             new_cat = sys.argv[3]
             move_file(filename, new_cat)
+    elif command == "export_expenses":
+        if len(sys.argv) < 3:
+            print(json.dumps({"error": "Missing year-month (YYYY-MM)"}))
+        else:
+            export_expenses(sys.argv[2])
     else:
         print(json.dumps({"error": "Unknown command"}))
 
