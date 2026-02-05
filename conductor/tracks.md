@@ -16,5 +16,8 @@ This file tracks all major tracks for the project. Each track has its own detail
 ## [x] Track: Advanced Search & Filtering
 *Link: [./conductor/tracks/advanced_search_20260205/](./conductor/tracks/advanced_search_20260205/)*
 
-## [ ] Track: Smart Expense Export
+## [x] Track: Smart Expense Export
 *Link: [./conductor/tracks/expense_export_20260205/](./conductor/tracks/expense_export_20260205/)*
+
+## [ ] Track: Duplicate Image Detection
+*Link: [./conductor/tracks/duplicate_detection_20260205/](./conductor/tracks/duplicate_detection_20260205/)*

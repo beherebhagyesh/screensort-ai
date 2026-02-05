@@ -330,6 +330,85 @@ def export_expenses(year_month):
     except Exception as e:
         print(json.dumps({"error": str(e)}))
 
+def find_duplicates():
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("SELECT id, filename, path, phash, created_at, category, amount FROM screenshots WHERE phash IS NOT NULL ORDER BY created_at DESC")
+    rows = c.fetchall()
+    
+    images = []
+    for r in rows:
+        try:
+            val = int(r['phash'], 16)
+            images.append({
+                "id": r['id'],
+                "filename": r['filename'],
+                "path": r['path'].replace('/sdcard/Pictures/Screenshots', '/images'),
+                "phash": val,
+                "created_at": r['created_at'],
+                "category": r['category'],
+                "amount": r['amount']
+            })
+        except: pass
+        
+    groups = []
+    processed = set()
+    
+    # Optimization: Sort by phash value to check nearby hashes? 
+    # No, Hamming distance is not linear. 
+    # We will just do brute force O(N^2) but optimized by skipping processed.
+    # Limit to comparing against last 1000 items to avoid timeouts on huge libraries.
+    
+    for i, img1 in enumerate(images):
+        if img1['id'] in processed:
+            continue
+            
+        current_group = [img1]
+        
+        # Check against others
+        # Heuristic: Check next 500 items (since sorted by date, duplicates are usually close in time)
+        # OR just check all if N < 1000.
+        
+        search_range = range(i + 1, len(images))
+        if len(images) > 1000:
+             search_range = range(i + 1, min(i + 500, len(images)))
+        
+        for j in search_range:
+            img2 = images[j]
+            if img2['id'] in processed:
+                continue
+            
+            # Distance
+            dist = bin(img1['phash'] ^ img2['phash']).count('1')
+            if dist <= 4: # Threshold 4 bits (more strict)
+                current_group.append(img2)
+                processed.add(img2['id'])
+        
+        if len(current_group) > 1:
+            groups.append(current_group)
+            processed.add(img1['id'])
+            
+    print(json.dumps(groups))
+
+def delete_file(filename):
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("SELECT path FROM screenshots WHERE filename = ?", (filename,))
+    row = c.fetchone()
+    if not row:
+        print(json.dumps({"error": "File not found"}))
+        return
+        
+    path = row['path']
+    try:
+        if os.path.exists(path):
+            os.remove(path)
+        c.execute("DELETE FROM screenshots WHERE filename = ?", (filename,))
+        conn.commit()
+        print(json.dumps({"success": True}))
+    except Exception as e:
+        print(json.dumps({"error": str(e)}))
+
 def main():
     if len(sys.argv) < 2:
         print(json.dumps({"error": "No command provided"}))
@@ -367,6 +446,13 @@ def main():
             print(json.dumps({"error": "Missing year-month (YYYY-MM)"}))
         else:
             export_expenses(sys.argv[2])
+    elif command == "find_duplicates":
+        find_duplicates()
+    elif command == "delete_file":
+        if len(sys.argv) < 3:
+            print(json.dumps({"error": "Missing filename"}))
+        else:
+            delete_file(sys.argv[2])
     else:
         print(json.dumps({"error": "Unknown command"}))
 

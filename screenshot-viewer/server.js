@@ -121,6 +121,28 @@ app.post('/api/export', async (req, res) => {
     }
 });
 
+app.get('/api/duplicates', async (req, res) => {
+    try {
+        const result = await runBridge('find_duplicates');
+        res.json(result);
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ error: e.toString() });
+    }
+});
+
+app.delete('/api/file/:filename', async (req, res) => {
+    try {
+        const filename = req.params.filename;
+        const result = await runBridge('delete_file', [filename]);
+        if (result.error) return res.status(500).json(result);
+        res.json(result);
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ error: e.toString() });
+    }
+});
+
 if (require.main === module) {
     app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 }

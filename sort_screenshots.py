@@ -108,7 +108,8 @@ def init_db():
         ('ai_processed_at', 'INTEGER'), ('detected_language', 'TEXT'),
         ('translated_text', 'TEXT'), ('is_video', 'INTEGER'),
         ('video_frames_analyzed', 'INTEGER'), ('video_objects', 'TEXT'),
-        ('ocr_method', 'TEXT'), ('ai_extracted_text', 'TEXT')
+        ('ocr_method', 'TEXT'), ('ai_extracted_text', 'TEXT'),
+        ('phash', 'TEXT')
     ]
     for col, coltype in migrations:
         try:
@@ -117,6 +118,38 @@ def init_db():
             pass  # Column already exists
     conn.commit()
     return conn
+
+
+def compute_dhash(image_path, hash_size=8):
+    """Compute Difference Hash (dHash) for an image."""
+    try:
+        if is_video_file(image_path):
+            return None # Skip videos for now
+            
+        img = Image.open(image_path)
+        # 1. Resize to (width+1, height)
+        img = img.resize((hash_size + 1, hash_size), Image.Resampling.LANCZOS).convert("L")
+        
+        pixels = list(img.getdata())
+        
+        # 2. Compare adjacent pixels
+        diff = []
+        for row in range(hash_size):
+            for col in range(hash_size):
+                pixel_left = pixels[row * (hash_size + 1) + col]
+                pixel_right = pixels[row * (hash_size + 1) + col + 1]
+                diff.append(1 if pixel_left > pixel_right else 0)
+                
+        # 3. Convert binary array to hex string
+        decimal_value = 0
+        for i, val in enumerate(diff):
+             if val:
+                 decimal_value += 2**i
+                 
+        return hex(decimal_value)[2:] # Strip '0x'
+    except Exception as e:
+        logging.warning(f"dHash computation failed for {image_path}: {e}")
+        return None
 
 
 def get_llm():
@@ -562,6 +595,10 @@ def process_files(conn):
             result = categorize_image(file_path, use_ai_ocr=AI_OCR_ENABLED)
             category, text, amount, is_video, ocr_method, ai_extracted_text = result
 
+            phash = None
+            if not is_video:
+                 phash = compute_dhash(file_path)
+
             ai_category, ai_summary = None, None
             detected_lang, translated_text = None, None
             video_frames_analyzed, video_objects = 0, None
@@ -631,15 +668,15 @@ def process_files(conn):
                          processed_at, ai_category, ai_summary, ai_processed_at,
                          detected_language, translated_text, is_video,
                          video_frames_analyzed, video_objects,
-                         ocr_method, ai_extracted_text)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'''
+                         ocr_method, ai_extracted_text, phash)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'''
                     values = (
                         filename, final_path, effective_category, text, amount,
                         created_at, now_ms, ai_category, ai_summary,
                         now_ms if ai_category else None, detected_lang,
                         translated_text, 1 if is_video else 0,
                         video_frames_analyzed, video_objects,
-                        ocr_method, ai_extracted_text
+                        ocr_method, ai_extracted_text, phash
                     )
                     cursor.execute(sql, values)
                     conn.commit()
@@ -716,6 +753,22 @@ def process_ocr_backfill(conn, limit=5):
     logging.info("OCR backfill batch complete.")
 
 
+def process_phash_backfill(conn, limit=50):
+    """Backfill phash for existing images."""
+    cursor = conn.cursor()
+    cursor.execute("SELECT id, filename, path FROM screenshots WHERE phash IS NULL AND is_video=0 LIMIT ?", (limit,))
+    rows = cursor.fetchall()
+    if not rows: return
+    
+    logging.info(f"Phash backfill: {len(rows)} files")
+    for row_id, fname, path in rows:
+        if os.path.exists(path):
+            ph = compute_dhash(path)
+            if ph:
+                cursor.execute("UPDATE screenshots SET phash=? WHERE id=?", (ph, row_id))
+    conn.commit()
+
+
 def run_continuous(interval=60):
     """Main loop: scan, process, backfill."""
     conn = init_db()
@@ -733,6 +786,7 @@ def run_continuous(interval=60):
     try:
         while True:
             process_files(conn)
+            process_phash_backfill(conn, limit=50) # Always run phash backfill
             if AI_ENABLED:
                 process_ai_backfill(conn, limit=3)
             if AI_OCR_ENABLED:

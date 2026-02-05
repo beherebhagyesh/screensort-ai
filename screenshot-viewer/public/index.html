@@ -108,6 +108,24 @@
                 <p class="md-body-medium">Version: 2.0 (Material)</p>
                 <p class="md-body-medium">Storage Path: /sdcard/Pictures/Screenshots</p>
             </div>
+            
+            <button onclick="switchView('view-duplicates')" style="width: 100%; margin-top: 16px; background: var(--md-sys-color-surface-container-high); border: none; color: var(--md-sys-color-on-surface); padding: 16px; border-radius: 12px; font-weight: 500; text-align: left; display: flex; align-items: center; gap: 16px;">
+                <span class="material-symbols-outlined">cleaning_services</span>
+                Clean Up Duplicates
+            </button>
+        </div>
+
+        <!-- DUPLICATES VIEW -->
+        <div id="view-duplicates" class="view-section" style="display: none;">
+            <div style="margin-bottom: 16px; display: flex; align-items: center; gap: 12px;">
+                <button onclick="switchView('view-settings')" style="background:none; border:none; color: var(--md-sys-color-on-surface); cursor: pointer;">
+                    <span class="material-symbols-outlined">arrow_back</span>
+                </button>
+                <h3 class="md-title-large">Duplicates</h3>
+            </div>
+            <div id="duplicates-list" style="display: flex; flex-direction: column; gap: 24px;">
+                <!-- Duplicates injected here -->
+            </div>
         </div>
 
     </main>
@@ -224,6 +242,8 @@
             // Special Logic
             if (viewId === 'view-gallery') {
                 loadCategories();
+            } else if (viewId === 'view-duplicates') {
+                loadDuplicates();
             }
         }
 
@@ -568,6 +588,59 @@
             } finally {
                 btn.textContent = oldText;
                 btn.disabled = false;
+            }
+        }
+
+        async function loadDuplicates() {
+            const container = document.getElementById('duplicates-list');
+            container.innerHTML = '<div style="padding:20px;">Scanning...</div>';
+            
+            try {
+                const res = await fetch('/api/duplicates');
+                const groups = await res.json();
+                
+                if (groups.length === 0) {
+                    container.innerHTML = '<div style="padding:20px; text-align:center;">No duplicates found!</div>';
+                    return;
+                }
+                
+                container.innerHTML = groups.map((group, idx) => `
+                    <div class="md-card">
+                        <div style="margin-bottom:12px; font-weight:500;">Group ${idx + 1}</div>
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+                            ${group.map(item => `
+                                <div style="display:flex; flex-direction:column; gap:8px;">
+                                    <img src="${item.path}" style="width:100%; border-radius:8px; aspect-ratio:9/16; object-fit:cover; background:#000;">
+                                    <div style="font-size:10px; opacity:0.7;">
+                                        <div>${new Date(item.created_at).toLocaleDateString()}</div>
+                                        <div style="word-break:break-all;">${item.filename}</div>
+                                    </div>
+                                    <button onclick="deleteFile('${item.filename}')" style="background:var(--md-sys-color-error); color:var(--md-sys-color-on-error); border:none; padding:6px; border-radius:8px; cursor:pointer;">Delete</button>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `).join('');
+            } catch (e) {
+                console.error(e);
+                container.innerHTML = 'Error loading duplicates.';
+            }
+        }
+
+        async function deleteFile(filename) {
+            if (!confirm('Are you sure you want to delete this file? This cannot be undone.')) return;
+            
+            try {
+                const res = await fetch(`/api/file/${filename}`, { method: 'DELETE' });
+                const result = await res.json();
+                if (result.success) {
+                    loadDuplicates(); // Refresh
+                } else {
+                    alert('Failed to delete: ' + result.error);
+                }
+            } catch (e) {
+                console.error(e);
+                alert('Error deleting file');
             }
         }
 
