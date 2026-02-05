@@ -56,7 +56,7 @@ AI_OCR_ENABLED = os.environ.get('SCREENSORT_AI_OCR', '0') == '1'
 # Global LLM instance (lazy loaded)
 _llm_instance = None
 
-CATEGORIES = {
+DEFAULT_CATEGORIES = {
     "Finance": ["bank", "pay", "rs", "transaction", "payment", "fund", "debit",
                 "credit", "balance", "wallet", "upi", "amount", "currency", "invest"],
     "Chats": ["message", "typing", "online", "last seen", "whatsapp", "telegram",
@@ -76,6 +76,23 @@ CATEGORIES = {
     "Travel": ["map", "location", "navigate", "direction", "trip", "uber",
                "ola", "ride"]
 }
+
+CATEGORIES = DEFAULT_CATEGORIES.copy()
+USER_CATEGORIES_FILE = "user_categories.json"
+
+def load_categories():
+    """Load categories from defaults and user config."""
+    global CATEGORIES
+    CATEGORIES = DEFAULT_CATEGORIES.copy()
+    if os.path.exists(USER_CATEGORIES_FILE):
+        try:
+            with open(USER_CATEGORIES_FILE, 'r') as f:
+                user_cats = json.load(f)
+                for cat, keywords in user_cats.items():
+                    CATEGORIES[cat] = keywords
+            # logging.info("Loaded user categories.") # Too spammy if inside loop?
+        except Exception as e:
+            logging.error(f"Error loading user categories: {e}")
 
 # Configure Logging
 logging.basicConfig(
@@ -785,6 +802,7 @@ def run_continuous(interval=60):
     logging.info(f"Starting Smart Indexer. Features: {status}. Interval: {interval}s")
     try:
         while True:
+            load_categories()
             process_files(conn)
             process_phash_backfill(conn, limit=50) # Always run phash backfill
             if AI_ENABLED:

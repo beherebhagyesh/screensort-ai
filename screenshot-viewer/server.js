@@ -143,6 +143,30 @@ app.delete('/api/file/:filename', async (req, res) => {
     }
 });
 
+app.get('/api/categories', async (req, res) => {
+    try {
+        const result = await runBridge('get_categories');
+        res.json(result);
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ error: e.toString() });
+    }
+});
+
+app.post('/api/categories', async (req, res) => {
+    try {
+        const { categories } = req.body;
+        if (!categories) return res.status(400).json({ error: 'Missing categories' });
+        
+        const result = await runBridge('save_categories', [JSON.stringify(categories)]);
+        if (result.error) return res.status(500).json(result);
+        res.json(result);
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ error: e.toString() });
+    }
+});
+
 if (require.main === module) {
     app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 }

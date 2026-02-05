@@ -19,5 +19,8 @@ This file tracks all major tracks for the project. Each track has its own detail
 ## [x] Track: Smart Expense Export
 *Link: [./conductor/tracks/expense_export_20260205/](./conductor/tracks/expense_export_20260205/)*
 
-## [ ] Track: Duplicate Image Detection
+## [x] Track: Duplicate Image Detection
 *Link: [./conductor/tracks/duplicate_detection_20260205/](./conductor/tracks/duplicate_detection_20260205/)*
+
+## [ ] Track: Custom User Categories
+*Link: [./conductor/tracks/custom_categories_20260205/](./conductor/tracks/custom_categories_20260205/)*

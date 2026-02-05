@@ -409,6 +409,39 @@ def delete_file(filename):
     except Exception as e:
         print(json.dumps({"error": str(e)}))
 
+def get_categories():
+    # Add parent dir to path to import sort_screenshots
+    sys.path.append(os.path.join(BASE_DIR, ".."))
+    
+    defaults = {}
+    try:
+        import sort_screenshots
+        defaults = sort_screenshots.DEFAULT_CATEGORIES
+    except Exception as e:
+        # Fallback if import fails
+        defaults = {} 
+
+    user_cats = {}
+    config_path = os.path.join(BASE_DIR, "../user_categories.json")
+    if os.path.exists(config_path):
+        try:
+            with open(config_path, 'r') as f:
+                user_cats = json.load(f)
+        except: pass
+        
+    print(json.dumps({"defaults": defaults, "user": user_cats}))
+
+def save_categories(cats_json):
+    config_path = os.path.join(BASE_DIR, "../user_categories.json")
+    try:
+        # Validate JSON
+        cats = json.loads(cats_json)
+        with open(config_path, 'w') as f:
+            json.dump(cats, f, indent=4)
+        print(json.dumps({"success": True}))
+    except Exception as e:
+        print(json.dumps({"error": str(e)}))
+
 def main():
     if len(sys.argv) < 2:
         print(json.dumps({"error": "No command provided"}))
@@ -453,6 +486,13 @@ def main():
             print(json.dumps({"error": "Missing filename"}))
         else:
             delete_file(sys.argv[2])
+    elif command == "get_categories":
+        get_categories()
+    elif command == "save_categories":
+        if len(sys.argv) < 3:
+            print(json.dumps({"error": "Missing config JSON"}))
+        else:
+            save_categories(sys.argv[2])
     else:
         print(json.dumps({"error": "Unknown command"}))
 

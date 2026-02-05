@@ -113,6 +113,11 @@
                 <span class="material-symbols-outlined">cleaning_services</span>
                 Clean Up Duplicates
             </button>
+            
+            <button onclick="switchView('view-manage-categories')" style="width: 100%; margin-top: 12px; background: var(--md-sys-color-surface-container-high); border: none; color: var(--md-sys-color-on-surface); padding: 16px; border-radius: 12px; font-weight: 500; text-align: left; display: flex; align-items: center; gap: 16px;">
+                <span class="material-symbols-outlined">category</span>
+                Manage Categories
+            </button>
         </div>
 
         <!-- DUPLICATES VIEW -->
@@ -125,6 +130,32 @@
             </div>
             <div id="duplicates-list" style="display: flex; flex-direction: column; gap: 24px;">
                 <!-- Duplicates injected here -->
+            </div>
+        </div>
+
+        <!-- MANAGE CATEGORIES VIEW -->
+        <div id="view-manage-categories" class="view-section" style="display: none;">
+            <div style="margin-bottom: 16px; display: flex; align-items: center; gap: 12px;">
+                <button onclick="switchView('view-settings')" style="background:none; border:none; color: var(--md-sys-color-on-surface); cursor: pointer;">
+                    <span class="material-symbols-outlined">arrow_back</span>
+                </button>
+                <h3 class="md-title-large">Manage Categories</h3>
+            </div>
+            
+            <!-- Add New -->
+            <div class="md-card" style="margin-bottom: 16px;">
+                <h4 style="margin-bottom:8px;">Add New Category</h4>
+                <div style="display:flex; gap:8px; margin-bottom:8px;">
+                    <input type="text" id="new-cat-name" placeholder="Category Name" style="flex:1; padding:8px; border-radius:8px; background:#333; color:white; border:1px solid #555;">
+                </div>
+                <div style="display:flex; gap:8px;">
+                    <input type="text" id="new-cat-keywords" placeholder="Keywords (comma separated)" style="flex:1; padding:8px; border-radius:8px; background:#333; color:white; border:1px solid #555;">
+                    <button onclick="addNewCategory()" style="background:var(--md-sys-color-primary); color:var(--md-sys-color-on-primary); border:none; padding:8px 16px; border-radius:8px; font-weight:600; cursor:pointer;">Add</button>
+                </div>
+            </div>
+
+            <div id="manage-categories-list" style="display: flex; flex-direction: column; gap: 12px;">
+                <!-- List injected here -->
             </div>
         </div>
 
@@ -244,6 +275,8 @@
                 loadCategories();
             } else if (viewId === 'view-duplicates') {
                 loadDuplicates();
+            } else if (viewId === 'view-manage-categories') {
+                loadManageCategories();
             }
         }
 
@@ -641,6 +674,105 @@
             } catch (e) {
                 console.error(e);
                 alert('Error deleting file');
+            }
+        }
+
+        // Manage Categories
+        let userCategoriesConfig = {}; // Stores ONLY user overrides
+        let allCategories = {}; // Stores merged
+
+        async function loadManageCategories() {
+            const container = document.getElementById('manage-categories-list');
+            container.innerHTML = 'Loading...';
+            
+            try {
+                const res = await fetch('/api/categories');
+                const data = await res.json();
+                userCategoriesConfig = data.user || {};
+                allCategories = { ...data.defaults, ...userCategoriesConfig };
+                
+                renderManageCategories();
+            } catch (e) {
+                console.error(e);
+                container.innerHTML = 'Error loading categories.';
+            }
+        }
+
+        function renderManageCategories() {
+            const container = document.getElementById('manage-categories-list');
+            
+            // Sort keys
+            const keys = Object.keys(allCategories).sort();
+            
+            container.innerHTML = keys.map(cat => {
+                const isCustom = userCategoriesConfig.hasOwnProperty(cat);
+                const keywords = allCategories[cat].join(', ');
+                
+                return `
+                <div class="md-card">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                        <div style="font-weight:500;">${cat} ${isCustom ? '<span style="font-size:10px; background:var(--md-sys-color-tertiary); color:var(--md-sys-color-on-tertiary); padding:2px 4px; border-radius:4px;">CUSTOM</span>' : ''}</div>
+                        ${isCustom ? `<button onclick="deleteCategory('${cat}')" style="color:var(--md-sys-color-error); background:none; border:none; cursor:pointer;"><span class="material-symbols-outlined">delete</span></button>` : ''}
+                    </div>
+                    <div style="font-size:12px; color:#aaa; margin-bottom:4px;">Keywords:</div>
+                    <div style="display:flex; gap:8px;">
+                        <input type="text" id="keywords-${cat}" value="${keywords}" style="flex:1; padding:6px; border-radius:4px; background:#222; color:white; border:1px solid #444; font-size:12px;">
+                        <button onclick="updateCategoryKeywords('${cat}')" style="background:var(--md-sys-color-surface-container-high); color:white; border:none; padding:6px 12px; border-radius:4px; cursor:pointer;">Save</button>
+                    </div>
+                </div>
+                `;
+            }).join('');
+        }
+
+        async function updateCategoryKeywords(cat) {
+            const input = document.getElementById(`keywords-${cat}`);
+            const keywords = input.value.split(',').map(s => s.trim()).filter(s => s);
+            
+            // Update user config
+            userCategoriesConfig[cat] = keywords;
+            await saveCategoriesConfig();
+        }
+
+        async function addNewCategory() {
+            const name = document.getElementById('new-cat-name').value.trim();
+            const keysStr = document.getElementById('new-cat-keywords').value;
+            const keywords = keysStr.split(',').map(s => s.trim()).filter(s => s);
+            
+            if (!name || keywords.length === 0) {
+                alert('Name and keywords required');
+                return;
+            }
+            
+            userCategoriesConfig[name] = keywords;
+            await saveCategoriesConfig();
+            
+            // Clear inputs
+            document.getElementById('new-cat-name').value = '';
+            document.getElementById('new-cat-keywords').value = '';
+        }
+
+        async function deleteCategory(cat) {
+            if (!confirm(`Delete category "${cat}"?`)) return;
+            delete userCategoriesConfig[cat];
+            await saveCategoriesConfig();
+        }
+
+        async function saveCategoriesConfig() {
+            try {
+                const res = await fetch('/api/categories', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ categories: userCategoriesConfig })
+                });
+                const result = await res.json();
+                if (result.success) {
+                    loadManageCategories(); // Reload to refresh merge
+                } else {
+                    alert('Error saving');
+                }
+            } catch (e) {
+                console.error(e);
+                alert('Error saving');
             }
         }
 
