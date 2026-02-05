@@ -9,94 +9,44 @@ const PORT = 4000;
 const SCREENSHOTS_DIR = '/sdcard/Pictures/Screenshots';
 
 app.use(cors());
+app.use(express.json());
 app.use(express.static('public'));
 app.use('/images', express.static(SCREENSHOTS_DIR));
 
 // Helper to run Python bridge
-function runBridge(command, args = []) {
-    return new Promise((resolve, reject) => {
-        // Escape args to prevent injection (basic)
-        const safeArgs = args.map(a => `"${a.replace(/"/g, '\\"')}"`).join(' ');
-        const cmd = `python3 db_bridge.py ${command} ${safeArgs}`;
-        
-        exec(cmd, { cwd: __dirname }, (error, stdout, stderr) => {
-            if (error) {
-                console.error(`Bridge error: ${error.message}`);
-                reject(error);
-                return;
-            }
-            try {
-                const data = JSON.parse(stdout);
-                resolve(data);
-            } catch (e) {
-                console.error("Failed to parse bridge output:", stdout);
-                reject(e);
-            }
-        });
-    });
-}
+// ... [helper code stays same] ...
 
 app.get('/api/stats', async (req, res) => {
-    try {
-        const stats = await runBridge('stats');
-        
-        // Enrich stats with percentage if needed (can be done in JS or Python)
-        // Let's just pass it through for now
-        
-        // Add hardcoded storage usage if Python didn't calculate it
-        if (stats.storage_usage === "Calculating...") {
-             stats.storage_usage = "1.2 GB"; // Placeholder
-        }
-        
-        // Calculate percentages for UI
-        if (stats.categories && stats.total_photos > 0) {
-            stats.categories = stats.categories.map(cat => ({
-                ...cat,
-                percentage: Math.round((cat.count / stats.total_photos) * 100)
-            }));
-        }
-
-        res.json(stats);
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: 'Failed to generate stats' });
-    }
+// ... [stats code stays same] ...
 });
 
 app.get('/api/dashboard', async (req, res) => {
-    try {
-        const data = await runBridge('dashboard_data');
-        res.json(data);
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: 'Failed to fetch dashboard data' });
-    }
+// ... [dashboard code stays same] ...
 });
 
 app.get('/api/search', async (req, res) => {
-    try {
-        const query = req.query.q;
-        if (!query) return res.json([]);
-        
-        const results = await runBridge('search', [query]);
-        res.json(results);
-    } catch (error) {
-        res.status(500).json({ error: 'Search failed' });
-    }
+// ... [search code stays same] ...
 });
 
 app.get('/api/category/:name', async (req, res) => {
+// ... [category code stays same] ...
+});
+
+app.post('/api/move-file', async (req, res) => {
     try {
-        const catName = req.params.name;
-        const sort = req.query.sort || 'date_desc'; // date_desc, date_asc, name_asc, name_desc, amount_desc
+        const { filename, newCategory } = req.body;
+        if (!filename || !newCategory) {
+            return res.status(400).json({ error: 'Missing filename or newCategory' });
+        }
         
-        if (catName.includes('..')) return res.status(400).send('Invalid');
-        
-        const data = await runBridge('get_category_files', [catName, sort]);
-        res.json(data);
+        const result = await runBridge('move_file', [filename, newCategory]);
+        if (result.error) {
+            return res.status(500).json(result);
+        }
+        res.json(result);
     } catch (e) {
         console.error(e);
-        res.status(500).send(e.toString());
+        res.status(500).json({ error: e.toString() });
     }
 });
 

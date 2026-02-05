@@ -2,10 +2,13 @@ import sqlite3
 import sys
 import json
 import os
+import shutil
 
 # Resolve DB path relative to this script (one level up)
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(BASE_DIR, "../screenshots.db")
+# Destination root
+SCREENSHOTS_DIR = '/sdcard/Pictures/Screenshots'
 
 def get_db():
     try:
@@ -15,6 +18,64 @@ def get_db():
     except Exception as e:
         print(json.dumps({"error": str(e)}))
         sys.exit(1)
+
+def move_file(filename, new_category):
+    conn = get_db()
+    c = conn.cursor()
+    
+    # 1. Get current path
+    c.execute("SELECT path, category FROM screenshots WHERE filename = ?", (filename,))
+    row = c.fetchone()
+    if not row:
+        print(json.dumps({"error": "File not found in database"}))
+        return
+
+    old_path = row['path']
+    old_category = row['category']
+    
+    if old_category == new_category:
+        print(json.dumps({"success": True, "message": "Already in this category"}))
+        return
+
+    # 2. Construct new path
+    dest_dir = os.path.join(SCREENSHOTS_DIR, new_category)
+    if not os.path.exists(dest_dir):
+        os.makedirs(dest_dir, exist_ok=True)
+    
+    new_path = os.path.join(dest_dir, filename)
+    
+    # Handle collision
+    if os.path.exists(new_path):
+        import time
+        base, ext = os.path.splitext(filename)
+        new_filename = f"{base}_{int(time.time())}{ext}"
+        new_path = os.path.join(dest_dir, new_filename)
+        final_filename = new_filename
+    else:
+        final_filename = filename
+
+    # 3. Move file
+    try:
+        if os.path.exists(old_path):
+            shutil.move(old_path, new_path)
+        else:
+            # Maybe the path in DB is outdated but file exists in expected old location?
+            # Or maybe it's already gone.
+            print(json.dumps({"error": f"Physical file not found at {old_path}"}))
+            return
+            
+    except Exception as e:
+        print(json.dumps({"error": f"Move failed: {str(e)}"}))
+        return
+
+    # 4. Update DB
+    try:
+        c.execute("UPDATE screenshots SET path = ?, category = ?, filename = ? WHERE filename = ?", 
+                  (new_path, new_category, final_filename, filename))
+        conn.commit()
+        print(json.dumps({"success": True, "new_path": new_path, "new_filename": final_filename}))
+    except Exception as e:
+        print(json.dumps({"error": f"DB update failed: {str(e)}"}))
 
 def get_stats():
     conn = get_db()
@@ -133,7 +194,8 @@ def search(query):
             "category": r['category'],
             "path": r['path'].replace('/sdcard/Pictures/Screenshots', '/images'),
             "text_snippet": r['text'][:100] if r['text'] else "",
-            "amount": r['amount']
+            "amount": r['amount'],
+            "created_at": r['created_at']
         })
     
     print(json.dumps(results))
@@ -190,6 +252,13 @@ def main():
             cat = sys.argv[2]
             sort = sys.argv[3] if len(sys.argv) > 3 else "date_desc"
             get_category_files(cat, sort)
+    elif command == "move_file":
+        if len(sys.argv) < 4:
+            print(json.dumps({"error": "Missing filename or category"}))
+        else:
+            filename = sys.argv[2]
+            new_cat = sys.argv[3]
+            move_file(filename, new_cat)
     else:
         print(json.dumps({"error": "Unknown command"}))
 

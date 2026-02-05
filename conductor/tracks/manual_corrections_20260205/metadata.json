@@ -1,0 +1,8 @@
+{
+  "id": "manual_corrections_20260205",
+  "name": "Manual Categorization & Corrections (UI)",
+  "description": "Allow users to manually change the category of a screenshot directly from the Web Viewer UI.",
+  "status": "planned",
+  "created_at": "2026-02-05",
+  "priority": "high"
+}
