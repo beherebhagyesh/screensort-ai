@@ -182,6 +182,8 @@ screenshots (
 
 | Variable | Default | Description |
 |----------|---------|-------------|
+| `SOURCE_DIR` | `/sdcard/Pictures/Screenshots` | Main directory for sorting and destination |
+| `SOURCE_DIRS` | `None` | List of directories to scan (JSON or comma-separated). Example: `["/sdcard/Download", "/sdcard/WhatsApp Images"]` |
 | `SCREENSORT_AI` | `0` | Enable AI (`1` to enable) |
 | `SCREENSORT_AI_OCR` | `0` | Enable AI-based OCR |
 | `SCREENSORT_VIDEO` | `0` | Enable video analysis |

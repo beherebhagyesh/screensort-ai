@@ -7,11 +7,34 @@ import sys
 import sqlite3
 import re
 import base64
+import json
 from PIL import Image, ImageEnhance
 
 # Configuration (can be overridden via environment variables for Docker)
 SOURCE_DIR = os.environ.get('SOURCE_DIR', "/sdcard/Pictures/Screenshots")
 DB_FILE = os.environ.get('DB_FILE', "screenshots.db")
+
+# Multi-source configuration
+_source_dirs_env = os.environ.get('SOURCE_DIRS')
+SCAN_DIRS = []
+if _source_dirs_env:
+    try:
+        SCAN_DIRS = json.loads(_source_dirs_env)
+        if not isinstance(SCAN_DIRS, list):
+             logging.warning("SOURCE_DIRS must be a JSON list. Falling back to parsing as string.")
+             raise ValueError
+    except (json.JSONDecodeError, ValueError):
+        # Fallback: assume comma or semicolon separated string
+        SCAN_DIRS = [s.strip() for s in _source_dirs_env.replace(';', ',').split(',') if s.strip()]
+else:
+    SCAN_DIRS = [SOURCE_DIR]
+
+# Ensure SOURCE_DIR is in SCAN_DIRS so we process unsorted files in the main folder too
+if SOURCE_DIR not in SCAN_DIRS:
+    SCAN_DIRS.append(SOURCE_DIR)
+
+logging.info(f"Scanning directories: {SCAN_DIRS}")
+logging.info(f"Destination directory: {SOURCE_DIR}")
 
 # AI Configuration
 AI_ENABLED = os.environ.get('SCREENSORT_AI', '0') == '1'
@@ -493,11 +516,17 @@ def process_files(conn):
     logging.info("Scanning for screenshots...")
     cursor = conn.cursor()
 
-    dirs_to_scan = (
-        [SOURCE_DIR]
-        + [os.path.join(SOURCE_DIR, cat) for cat in CATEGORIES.keys()]
-        + [os.path.join(SOURCE_DIR, "Unsorted")]
-    )
+    dirs_to_scan = list(SCAN_DIRS)
+    # Add destination subfolders (Categories + Unsorted)
+    dirs_to_scan += [os.path.join(SOURCE_DIR, cat) for cat in CATEGORIES.keys()]
+    dirs_to_scan.append(os.path.join(SOURCE_DIR, "Unsorted"))
+    
+    # Remove duplicates to avoid scanning the same folder twice
+    dirs_to_scan = list(set(dirs_to_scan))
+
+    # Identify destination subfolders where we should trust the DB check
+    dest_subfolders = set([os.path.join(SOURCE_DIR, cat) for cat in CATEGORIES.keys()])
+    dest_subfolders.add(os.path.join(SOURCE_DIR, "Unsorted"))
 
     files_processed_count = 0
 
@@ -517,10 +546,12 @@ def process_files(conn):
             if ext not in valid_exts:
                 continue
 
-            cursor.execute("SELECT id FROM screenshots WHERE filename = ?",
-                           (filename,))
-            if cursor.fetchone():
-                continue
+            # Only skip if we are in a destination folder and file is already indexed
+            if directory in dest_subfolders:
+                cursor.execute("SELECT id FROM screenshots WHERE filename = ?",
+                               (filename,))
+                if cursor.fetchone():
+                    continue
 
             file_path = os.path.join(directory, filename)
             if not os.path.isfile(file_path):
@@ -568,7 +599,7 @@ def process_files(conn):
                 current_dir_name = os.path.basename(os.path.dirname(file_path))
 
                 should_move = (
-                    directory == SOURCE_DIR
+                    directory in SCAN_DIRS
                     or (current_dir_name == "Unsorted"
                         and effective_category != "Unsorted")
                 )
@@ -576,6 +607,15 @@ def process_files(conn):
                     dest_dir = os.path.join(SOURCE_DIR, effective_category)
                     os.makedirs(dest_dir, exist_ok=True)
                     new_path = os.path.join(dest_dir, filename)
+                    
+                    # Handle naming collisions
+                    if os.path.exists(new_path):
+                        base, ext = os.path.splitext(filename)
+                        timestamp = int(time.time())
+                        new_filename = f"{base}_{timestamp}{ext}"
+                        new_path = os.path.join(dest_dir, new_filename)
+                        filename = new_filename # Update filename for DB insert
+
                     try:
                         shutil.move(file_path, new_path)
                         final_path = new_path
