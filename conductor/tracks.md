@@ -31,5 +31,5 @@ This file tracks all major tracks for the project. Each track has its own detail
 ## [x] Track: Image Editing Tools
 *Link: [./conductor/tracks/image_editing_20260205/](./conductor/tracks/image_editing_20260205/)*
 
-## [ ] Track: Knowledge Base Export
+## [x] Track: Knowledge Base Export
 *Link: [./conductor/tracks/kb_export_20260205/](./conductor/tracks/kb_export_20260205/)*
