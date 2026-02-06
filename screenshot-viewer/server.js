@@ -182,6 +182,17 @@ app.post('/api/save-image', async (req, res) => {
     }
 });
 
+app.post('/api/generate-kb', async (req, res) => {
+    try {
+        const result = await runBridge('generate_kb');
+        if (result.error) return res.status(500).json(result);
+        res.json(result);
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ error: e.toString() });
+    }
+});
+
 if (require.main === module) {
     app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 }

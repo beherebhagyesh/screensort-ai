@@ -476,6 +476,59 @@ def save_image_data(filename, b64_data):
     except Exception as e:
         print(json.dumps({"error": str(e)}))
 
+    except Exception as e:
+        print(json.dumps({"error": str(e)}))
+
+def generate_kb():
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("SELECT * FROM screenshots")
+    rows = c.fetchall()
+    
+    kb_dir = os.path.join(SCREENSHOTS_DIR, "knowledge_base")
+    os.makedirs(kb_dir, exist_ok=True)
+    
+    count = 0
+    for r in rows:
+        category = r['category'] or "Unsorted"
+        cat_dir = os.path.join(kb_dir, category)
+        os.makedirs(cat_dir, exist_ok=True)
+        
+        try:
+            date_str = datetime.fromtimestamp(r['created_at'] / 1000).strftime('%Y-%m-%d')
+        except:
+            date_str = "0000-00-00"
+            
+        safe_name = os.path.splitext(r['filename'])[0].replace(" ", "_")
+        md_name = f"{date_str}_{safe_name}.md"
+        md_path = os.path.join(cat_dir, md_name)
+        
+        rel_img_path = f"../../{category}/{r['filename']}"
+        
+        content = f"""---
+date: {date_str}
+amount: {r['amount'] or 0}
+tags: [{category}]
+---
+
+# {r['ai_summary'] or r['filename']}
+
+![Image]({rel_img_path})
+
+## AI Summary
+{r['ai_summary'] or "N/A"}
+
+## Extracted Text
+```text
+{r['text'] or ""}
+```
+"""
+        with open(md_path, "w") as f:
+            f.write(content)
+        count += 1
+        
+    print(json.dumps({"success": True, "count": count, "path": kb_dir}))
+
 def main():
     if len(sys.argv) < 2:
         print(json.dumps({"error": "No command provided"}))
@@ -532,6 +585,8 @@ def main():
             print(json.dumps({"error": "Missing filename or data"}))
         else:
             save_image_data(sys.argv[2], sys.argv[3])
+    elif command == "generate_kb":
+        generate_kb()
     else:
         print(json.dumps({"error": "Unknown command"}))
 

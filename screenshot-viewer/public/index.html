@@ -118,6 +118,11 @@
                 <span class="material-symbols-outlined">category</span>
                 Manage Categories
             </button>
+            
+            <button onclick="generateKB()" style="width: 100%; margin-top: 12px; background: var(--md-sys-color-surface-container-high); border: none; color: var(--md-sys-color-on-surface); padding: 16px; border-radius: 12px; font-weight: 500; text-align: left; display: flex; align-items: center; gap: 16px;">
+                <span class="material-symbols-outlined">library_books</span>
+                Generate Knowledge Base
+            </button>
         </div>
 
         <!-- DUPLICATES VIEW -->
@@ -943,6 +948,23 @@
             } finally {
                 btn.textContent = 'Save';
                 btn.disabled = false;
+            }
+        }
+
+        async function generateKB() {
+            if(!confirm("Generate Knowledge Base (Markdown files)? This might take a moment.")) return;
+            
+            try {
+                const res = await fetch('/api/generate-kb', { method: 'POST' });
+                const result = await res.json();
+                if(result.success) {
+                    alert(`Knowledge Base generated!\nFiles: ${result.count}\nPath: ${result.path}`);
+                } else {
+                    alert('Error: ' + result.error);
+                }
+            } catch(e) {
+                console.error(e);
+                alert('Request failed');
             }
         }
 
