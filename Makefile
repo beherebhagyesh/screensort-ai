@@ -50,6 +50,10 @@ run-bg:
 	nohup python sort_screenshots.py --ai --ai-ocr --translate > sort.log 2>&1 &
 	@echo "Started in background. Check sort.log for output."
 
+inventory:
+	python inventory_scanner.py --limit 20
+
+
 stop:
 	pkill -f "python.*sort_screenshots.py" || echo "Not running"
 
