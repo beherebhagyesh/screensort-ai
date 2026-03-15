@@ -14,6 +14,6 @@ describe('Service Worker', () => {
     const swContent = fs.readFileSync(path.join(__dirname, '../public/service-worker.js'), 'utf8');
     expect(swContent).toContain('CACHE_NAME');
     expect(swContent).toContain('STATIC_ASSETS');
-    expect(swContent).toContain('Network-first'); // My comment in the code
+    expect(swContent).toContain('Network First'); // My comment in the code
   });
 });

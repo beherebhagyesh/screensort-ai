@@ -6,3 +6,30 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ## [ ] Track: Implement PWA features for the Viewer and Background Processing for the Sorting Script.
 *Link: [./conductor/tracks/pwa_bg_proc_20260114/](./conductor/tracks/pwa_bg_proc_20260114/)*
+
+## [x] Track: Multi-Source Scanning Support
+*Link: [./conductor/tracks/multi_source_scanning_20260205/](./conductor/tracks/multi_source_scanning_20260205/)*
+
+## [x] Track: Manual Categorization & Corrections (UI)
+*Link: [./conductor/tracks/manual_corrections_20260205/](./conductor/tracks/manual_corrections_20260205/)*
+
+## [x] Track: Advanced Search & Filtering
+*Link: [./conductor/tracks/advanced_search_20260205/](./conductor/tracks/advanced_search_20260205/)*
+
+## [x] Track: Smart Expense Export
+*Link: [./conductor/tracks/expense_export_20260205/](./conductor/tracks/expense_export_20260205/)*
+
+## [x] Track: Duplicate Image Detection
+*Link: [./conductor/tracks/duplicate_detection_20260205/](./conductor/tracks/duplicate_detection_20260205/)*
+
+## [x] Track: Custom User Categories
+*Link: [./conductor/tracks/custom_categories_20260205/](./conductor/tracks/custom_categories_20260205/)*
+
+## [x] Track: Thumbnail Generation
+*Link: [./conductor/tracks/thumbnails_20260205/](./conductor/tracks/thumbnails_20260205/)*
+
+## [x] Track: Image Editing Tools
+*Link: [./conductor/tracks/image_editing_20260205/](./conductor/tracks/image_editing_20260205/)*
+
+## [x] Track: Knowledge Base Export
+*Link: [./conductor/tracks/kb_export_20260205/](./conductor/tracks/kb_export_20260205/)*

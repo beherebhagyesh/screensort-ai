@@ -1,374 +1,980 @@
 <!DOCTYPE html>
-<html class="dark" lang="en">
+<html lang="en">
 <head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-    <title>ScreenSort AI Dashboard</title>
-    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-    <script id="tailwind-config">
-        tailwind.config = {
-            darkMode: "class",
-            theme: {
-                extend: {
-                    colors: {
-                        "primary": "#2877f6",
-                        "background-light": "#f1f2f4",
-                        "background-dark": "#0f182a",
-                        "glass-white": "rgba(255, 255, 255, 0.05)",
-                        "glass-border": "rgba(255, 255, 255, 0.1)",
-                        "neon-cyan": "#00f2ff",
-                        "neon-purple": "#bc13fe",
-                        "neon-lime": "#39ff14"
-                    },
-                    fontFamily: {
-                        "display": ["Inter", "sans-serif"]
-                    },
-                    borderRadius: {
-                        "DEFAULT": "0.5rem",
-                        "lg": "1rem",
-                        "xl": "1.5rem",
-                        "full": "9999px"
-                    },
-                },
-            },
-        }
-    </script>
-    <style>
-        .glass {
-            background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        .mesh-gradient {
-            background-color: #0f182a;
-            background-image: 
-                radial-gradient(at 0% 0%, rgba(40, 119, 246, 0.15) 0px, transparent 50%),
-                radial-gradient(at 100% 0%, rgba(188, 19, 254, 0.1) 0px, transparent 50%);
-        }
-        .pie-chart-conic {
-            background: conic-gradient(
-                #2877f6 0% 45%, 
-                #bc13fe 45% 75%, 
-                #39ff14 75% 100%
-            );
-        }
-        body {
-            min-height: max(884px, 100dvh);
-        }
-    </style>
+    <title>ScreenSort AI</title>
+    <link href="/manifest.json" rel="manifest">
+    <meta name="theme-color" content="#111318">
+    
+    <!-- CSS -->
+    <link href="/styles.css" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet" />
+
+    <!-- Chart.js (Optional, failure won't break app structure) -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-<body class="font-display bg-background-light dark:bg-background-dark text-white min-h-screen mesh-gradient overflow-x-hidden">
-    <!-- Top Navigation Bar -->
-    <nav class="sticky top-0 z-50 flex items-center justify-between px-6 pt-12 pb-4 backdrop-blur-md">
-        <div class="flex items-center gap-3">
-            <div class="size-10 rounded-full glass flex items-center justify-center border border-white/20">
-                <span class="material-symbols-outlined text-primary text-xl">auto_awesome</span>
-            </div>
-            <h1 class="text-lg font-bold tracking-tight text-white">ScreenSort AI</h1>
+<body>
+
+    <!-- Top App Bar -->
+    <header style="position: sticky; top: 0; background: var(--md-sys-color-surface); z-index: 100; padding: 16px 20px; display: flex; align-items: center; justify-content: space-between;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <span class="material-symbols-outlined" style="color: var(--md-sys-color-primary);">auto_awesome</span>
+            <span class="md-title-large">ScreenSort</span>
         </div>
-        <div class="flex gap-4">
-            <button class="size-10 rounded-full glass flex items-center justify-center relative">
-                <span class="material-symbols-outlined text-white/80">notifications</span>
-                <span class="absolute top-2 right-2 size-2 bg-red-500 rounded-full"></span>
+        <div id="header-actions">
+            <!-- Dynamic actions based on view -->
+            <button onclick="fetchData()" style="background: none; border: none; color: var(--md-sys-color-on-surface); cursor: pointer;">
+                <span class="material-symbols-outlined">refresh</span>
             </button>
         </div>
-    </nav>
-    <!-- Hero Header -->
-    <header class="px-6 py-6">
-        <h2 class="text-[26px] font-semibold leading-tight text-white/90">
-            Good Afternoon.<br/>
-            <span class="text-white">You have <span class="text-primary font-bold">12 new</span> screenshots to review.</span>
-        </h2>
     </header>
-    <!-- Storage Widget (Hero Glass) -->
-    <section class="px-6 mb-8">
-        <div class="glass p-6 rounded-3xl relative overflow-hidden group">
-            <div class="absolute -right-4 -top-4 size-32 bg-primary/20 blur-3xl rounded-full"></div>
-            <div class="relative z-10 flex justify-between items-center">
-                <div>
-                    <p class="text-white/60 text-sm font-medium mb-1 uppercase tracking-widest">Optimized Storage</p>
-                    <div class="flex items-baseline gap-2">
-                        <span class="text-5xl font-bold tracking-tighter">2.4</span>
-                        <span class="text-2xl font-semibold text-primary">GB</span>
-                    </div>
-                    <p class="text-white/40 text-xs mt-2 flex items-center gap-1">
-                        <span class="material-symbols-outlined text-[14px] text-green-400">check_circle</span>
-                        AI optimization is active
-                    </p>
-                </div>
-                <button class="bg-primary hover:bg-primary/90 text-white px-5 py-3 rounded-2xl font-semibold text-sm transition-all shadow-lg shadow-primary/20">
-                    Clean Up
-                </button>
-            </div>
-        </div>
-    </section>
-    <!-- Analytics Section -->
-    <section class="px-6 mb-8">
-        <div class="flex items-center justify-between mb-4">
-            <h3 class="text-lg font-bold text-white/90">Categories</h3>
-            <span class="text-xs font-medium text-white/40 uppercase tracking-widest">Last 30 Days</span>
-        </div>
-        <div class="glass p-6 rounded-3xl flex items-center gap-8">
-            <div class="relative size-32 flex-shrink-0">
-                <div class="pie-chart-conic size-full rounded-full flex items-center justify-center">
-                    <div class="size-[80%] bg-[#0f182a] rounded-full flex flex-col items-center justify-center">
-                        <span class="text-xl font-bold leading-none">842</span>
-                        <span class="text-[10px] text-white/40 uppercase tracking-tighter">Total</span>
-                    </div>
-                </div>
-            </div>
-            <div class="flex flex-col gap-3 flex-1">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-2">
-                        <span class="size-2 rounded-full bg-primary shadow-[0_0_8px_#2877f6]"></span>
-                        <span class="text-sm font-medium text-white/80">Finance</span>
-                    </div>
-                    <span class="text-sm font-bold">45%</span>
-                </div>
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-2">
-                        <span class="size-2 rounded-full bg-neon-purple shadow-[0_0_8px_#bc13fe]"></span>
-                        <span class="text-sm font-medium text-white/80">Social</span>
-                    </div>
-                    <span class="text-sm font-bold">30%</span>
-                </div>
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-2">
-                        <span class="size-2 rounded-full bg-neon-lime shadow-[0_0_8px_#39ff14]"></span>
-                        <span class="text-sm font-medium text-white/80">Code</span>
-                    </div>
-                    <span class="text-sm font-bold">25%</span>
-                </div>
-            </div>
-        </div>
-    </section>
-    <!-- Recent Insights -->
-    <section class="px-6 mb-24">
-        <div class="flex items-center justify-between mb-4">
-            <h3 class="text-lg font-bold text-white/90">AI Insights</h3>
-            <button class="text-sm font-medium text-primary">View all</button>
-        </div>
-        <div id="insights-container" class="flex flex-col gap-3">
-            <!-- Insights will be injected here by JS -->
-            <div class="glass p-4 rounded-2xl flex items-center gap-4 animate-pulse">
-                 <div class="size-16 rounded-xl bg-white/10"></div>
-                 <div class="flex-1 space-y-2">
-                     <div class="h-4 bg-white/10 rounded w-1/2"></div>
-                     <div class="h-3 bg-white/10 rounded w-3/4"></div>
-                 </div>
-            </div>
-        </div>
-    </section>
 
-    <!-- Search Overlay -->
-    <div id="search-overlay" class="fixed inset-0 z-[60] bg-background-dark/95 backdrop-blur-xl hidden flex-col p-6 animate-fade-in">
-        <div class="flex justify-between items-center mb-6">
-            <h2 class="text-2xl font-bold text-white">Search Vault</h2>
-            <button onclick="toggleSearch()" class="size-10 rounded-full glass flex items-center justify-center">
-                <span class="material-symbols-outlined text-white">close</span>
+    <!-- VIEWS -->
+    <main id="main-content" style="padding: 0 16px 96px 16px;">
+        
+        <!-- DASHBOARD VIEW -->
+        <div id="view-dashboard" class="view-section">
+            <!-- Stats Cards -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
+                <div class="md-card">
+                    <span class="md-body-medium">Total Items</span>
+                    <div style="font-size: 32px; font-weight: 700; color: var(--md-sys-color-primary);" id="stat-total">...</div>
+                </div>
+                <div class="md-card">
+                    <span class="md-body-medium">Storage</span>
+                    <div style="font-size: 32px; font-weight: 700; color: var(--md-sys-color-tertiary);" id="stat-storage">...</div>
+                </div>
+            </div>
+
+            <!-- Export Button -->
+            <button onclick="openExportModal()" style="width: 100%; margin-bottom: 16px; background: var(--md-sys-color-surface-container-high); border: 1px solid var(--md-sys-color-outline-variant); color: var(--md-sys-color-primary); padding: 12px; border-radius: 12px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                <span class="material-symbols-outlined">download</span>
+                Export Monthly Expenses
+            </button>
+
+            <!-- Charts Area -->
+            <div class="md-card" style="margin-bottom: 16px; min-height: 200px;">
+                <canvas id="activityChart"></canvas>
+            </div>
+
+            <div class="md-card" style="margin-bottom: 16px; min-height: 200px;">
+                <canvas id="categoryChart"></canvas>
+            </div>
+
+            <!-- Recent Activity -->
+            <h3 class="md-title-large" style="margin-bottom: 12px;">Recent</h3>
+            <div id="recent-list" style="display: flex; flex-direction: column; gap: 12px;">
+                <!-- Recent items injected here -->
+            </div>
+        </div>
+
+        <!-- GALLERY VIEW -->
+        <div id="view-gallery" class="view-section" style="display: none;">
+            <h3 class="md-title-large" style="margin-bottom: 16px;">Categories</h3>
+            <div id="category-list" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px;">
+                <!-- Categories injected here -->
+            </div>
+        </div>
+
+        <!-- CATEGORY DETAILS VIEW (Hidden by default) -->
+        <div id="view-category-details" class="view-section" style="display: none;">
+            <div style="margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between;">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <button onclick="switchView('view-gallery')" style="background:none; border:none; color: var(--md-sys-color-on-surface); cursor: pointer;">
+                        <span class="material-symbols-outlined">arrow_back</span>
+                    </button>
+                    <h3 id="cat-detail-title" class="md-title-large">Category</h3>
+                </div>
+                <select id="sort-select" onchange="openCategory(document.getElementById('cat-detail-title').textContent, this.value)" 
+                        style="background: var(--md-sys-color-surface-container-high); color: var(--md-sys-color-on-surface); border: none; padding: 8px 12px; border-radius: 8px; font-size: 14px; outline: none;">
+                    <option value="date_desc">Newest First</option>
+                    <option value="date_asc">Oldest First</option>
+                    <option value="name_asc">Name (A-Z)</option>
+                    <option value="name_desc">Name (Z-A)</option>
+                    <option value="amount_desc">Highest Amount</option>
+                </select>
+            </div>
+            <div id="cat-detail-grid" class="gallery-grid">
+                <!-- Images injected here -->
+            </div>
+        </div>
+
+        <!-- SETTINGS VIEW -->
+        <div id="view-settings" class="view-section" style="display: none;">
+             <div class="md-card">
+                <h3>App Info</h3>
+                <p class="md-body-medium">Version: 2.0 (Material)</p>
+                <p class="md-body-medium">Storage Path: /sdcard/Pictures/Screenshots</p>
+            </div>
+            
+            <button onclick="switchView('view-duplicates')" style="width: 100%; margin-top: 16px; background: var(--md-sys-color-surface-container-high); border: none; color: var(--md-sys-color-on-surface); padding: 16px; border-radius: 12px; font-weight: 500; text-align: left; display: flex; align-items: center; gap: 16px;">
+                <span class="material-symbols-outlined">cleaning_services</span>
+                Clean Up Duplicates
+            </button>
+            
+            <button onclick="switchView('view-manage-categories')" style="width: 100%; margin-top: 12px; background: var(--md-sys-color-surface-container-high); border: none; color: var(--md-sys-color-on-surface); padding: 16px; border-radius: 12px; font-weight: 500; text-align: left; display: flex; align-items: center; gap: 16px;">
+                <span class="material-symbols-outlined">category</span>
+                Manage Categories
+            </button>
+            
+            <button onclick="generateKB()" style="width: 100%; margin-top: 12px; background: var(--md-sys-color-surface-container-high); border: none; color: var(--md-sys-color-on-surface); padding: 16px; border-radius: 12px; font-weight: 500; text-align: left; display: flex; align-items: center; gap: 16px;">
+                <span class="material-symbols-outlined">library_books</span>
+                Generate Knowledge Base
             </button>
         </div>
-        
-        <div class="relative mb-6">
-            <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-white/50">search</span>
-            <input type="text" id="search-input" oninput="handleSearch(this.value)" 
-                   class="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-white placeholder-white/40 focus:outline-none focus:border-primary/50 transition-colors"
-                   placeholder="Type 'wifi', 'receipt', '$50'...">
+
+        <!-- DUPLICATES VIEW -->
+        <div id="view-duplicates" class="view-section" style="display: none;">
+            <div style="margin-bottom: 16px; display: flex; align-items: center; gap: 12px;">
+                <button onclick="switchView('view-settings')" style="background:none; border:none; color: var(--md-sys-color-on-surface); cursor: pointer;">
+                    <span class="material-symbols-outlined">arrow_back</span>
+                </button>
+                <h3 class="md-title-large">Duplicates</h3>
+            </div>
+            <div id="duplicates-list" style="display: flex; flex-direction: column; gap: 24px;">
+                <!-- Duplicates injected here -->
+            </div>
         </div>
 
-        <div id="search-results" class="flex-1 overflow-y-auto space-y-3">
-            <!-- Results injected here -->
-            <div class="text-center text-white/30 mt-10">
-                <span class="material-symbols-outlined text-4xl mb-2">manage_search</span>
-                <p>Search your entire history by text or category.</p>
+        <!-- MANAGE CATEGORIES VIEW -->
+        <div id="view-manage-categories" class="view-section" style="display: none;">
+            <div style="margin-bottom: 16px; display: flex; align-items: center; gap: 12px;">
+                <button onclick="switchView('view-settings')" style="background:none; border:none; color: var(--md-sys-color-on-surface); cursor: pointer;">
+                    <span class="material-symbols-outlined">arrow_back</span>
+                </button>
+                <h3 class="md-title-large">Manage Categories</h3>
+            </div>
+            
+            <!-- Add New -->
+            <div class="md-card" style="margin-bottom: 16px;">
+                <h4 style="margin-bottom:8px;">Add New Category</h4>
+                <div style="display:flex; gap:8px; margin-bottom:8px;">
+                    <input type="text" id="new-cat-name" placeholder="Category Name" style="flex:1; padding:8px; border-radius:8px; background:#333; color:white; border:1px solid #555;">
+                </div>
+                <div style="display:flex; gap:8px;">
+                    <input type="text" id="new-cat-keywords" placeholder="Keywords (comma separated)" style="flex:1; padding:8px; border-radius:8px; background:#333; color:white; border:1px solid #555;">
+                    <button onclick="addNewCategory()" style="background:var(--md-sys-color-primary); color:var(--md-sys-color-on-primary); border:none; padding:8px 16px; border-radius:8px; font-weight:600; cursor:pointer;">Add</button>
+                </div>
+            </div>
+
+            <div id="manage-categories-list" style="display: flex; flex-direction: column; gap: 12px;">
+                <!-- List injected here -->
+            </div>
+        </div>
+
+    </main>
+
+    <!-- SEARCH OVERLAY (Full screen) -->
+    <div id="search-overlay" style="position: fixed; inset: 0; background: var(--md-sys-color-background); z-index: 200; padding: 16px; display: none; flex-direction: column;">
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+            <button onclick="toggleSearch()" style="background:none; border:none; color: var(--md-sys-color-on-surface);">
+                <span class="material-symbols-outlined">arrow_back</span>
+            </button>
+            <input type="text" id="search-input" placeholder="Search..." 
+                   style="flex: 1; background: var(--md-sys-color-surface-container-high); border: none; padding: 12px 16px; border-radius: 24px; color: white; font-size: 16px; outline: none;">
+            <button onclick="toggleFilters()" style="background: var(--md-sys-color-surface-container-high); border: none; padding: 10px; border-radius: 50%; color: var(--md-sys-color-primary); cursor: pointer;">
+                <span class="material-symbols-outlined">tune</span>
+            </button>
+        </div>
+
+        <!-- Filter Panel -->
+        <div id="filter-panel" style="display: none; background: var(--md-sys-color-surface-container); padding: 16px; border-radius: 12px; margin-bottom: 16px; gap: 12px; flex-direction: column;">
+             <div style="display: flex; gap: 8px;">
+                 <select id="filter-category" onchange="performSearch()" style="flex: 1; background: #333; color: white; border: 1px solid #555; padding: 8px; border-radius: 8px;">
+                     <option value="">All Categories</option>
+                 </select>
+             </div>
+             <div style="display: flex; gap: 8px; align-items: center;">
+                 <span style="font-size: 12px; width: 40px; color: #aaa;">Date:</span>
+                 <input type="date" id="filter-date-start" onchange="performSearch()" style="flex: 1; background: #333; color: white; border: 1px solid #555; padding: 8px; border-radius: 8px;">
+                 <span style="color: #aaa;">-</span>
+                 <input type="date" id="filter-date-end" onchange="performSearch()" style="flex: 1; background: #333; color: white; border: 1px solid #555; padding: 8px; border-radius: 8px;">
+             </div>
+             <div style="display: flex; gap: 8px; align-items: center;">
+                 <span style="font-size: 12px; width: 40px; color: #aaa;">$$$:</span>
+                 <input type="number" id="filter-amount-min" placeholder="Min" onchange="performSearch()" style="flex: 1; background: #333; color: white; border: 1px solid #555; padding: 8px; border-radius: 8px;">
+                 <span style="color: #aaa;">-</span>
+                 <input type="number" id="filter-amount-max" placeholder="Max" onchange="performSearch()" style="flex: 1; background: #333; color: white; border: 1px solid #555; padding: 8px; border-radius: 8px;">
+             </div>
+        </div>
+
+        <div id="search-results" style="overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 12px;"></div>
+    </div>
+
+    <!-- IMAGE VIEWER MODAL -->
+    <div id="image-viewer" style="position: fixed; inset: 0; background: black; z-index: 300; display: none; flex-direction: column; justify-content: center;">
+        <button onclick="closeImageViewer()" style="position: absolute; top: 16px; left: 16px; background: rgba(0,0,0,0.5); border: none; color: white; border-radius: 50%; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; z-index: 10;">
+            <span class="material-symbols-outlined">close</span>
+        </button>
+        <img id="viewer-img" src="" style="max-width: 100%; max-height: 70vh; object-fit: contain;">
+        <div id="viewer-details" style="padding: 16px; color: white; background: rgba(0,0,0,0.8); position: absolute; bottom: 0; width: 100%; box-sizing: border-box;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                <div>
+                    <h4 id="viewer-filename" style="margin: 0 0 4px 0; word-break: break-all;">Filename</h4>
+                    <p id="viewer-date" style="font-size: 12px; opacity: 0.7; margin: 0;">Date</p>
+                </div>
+                <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 8px;">
+                    <select id="viewer-cat-select" style="background: #333; color: white; border: 1px solid #444; padding: 4px 8px; border-radius: 4px; font-size: 12px;">
+                        <!-- Categories will be injected here -->
+                    </select>
+                    <div style="display:flex; gap:8px;">
+                        <button onclick="openEditor()" style="background:var(--md-sys-color-secondary); color:var(--md-sys-color-on-secondary); border:none; padding:6px 12px; border-radius:16px; font-size:12px; font-weight:600; cursor:pointer;">
+                            Edit
+                        </button>
+                        <button id="move-btn" onclick="updateCategory()" style="background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary); border: none; padding: 6px 12px; border-radius: 16px; font-size: 12px; font-weight: 600; cursor: pointer;">
+                            Move
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- iOS Bottom Navigation Bar -->
-    <nav class="fixed bottom-0 w-full px-6 pb-8 pt-4 backdrop-blur-2xl bg-background-dark/80 border-t border-white/5 flex justify-between items-center z-50">
-        <button class="flex flex-col items-center gap-1 group">
-            <span class="material-symbols-outlined text-primary fill-1">home</span>
-            <span class="text-[10px] font-bold text-primary">Home</span>
-        </button>
-        <button class="flex flex-col items-center gap-1 group opacity-40">
-            <span class="material-symbols-outlined text-white group-hover:text-primary transition-colors">grid_view</span>
-            <span class="text-[10px] font-medium text-white group-hover:text-primary transition-colors">Vault</span>
-        </button>
-        <div class="relative -top-6">
-            <button class="size-14 rounded-full bg-primary flex items-center justify-center shadow-xl shadow-primary/40 border-4 border-[#0f182a]">
-                <span class="material-symbols-outlined text-white text-3xl">scan_delete</span>
-            </button>
+    <!-- EXPORT MODAL -->
+    <div id="export-modal" style="position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 400; display: none; align-items: center; justify-content: center;">
+        <div class="md-card" style="width: 300px; display: flex; flex-direction: column; gap: 16px;">
+            <h3 class="md-title-large">Export Expenses</h3>
+            <p>Select month to export CSV:</p>
+            <input type="month" id="export-month-input" style="padding: 12px; border-radius: 8px; border: 1px solid #555; background: #333; color: white;">
+            <div style="display: flex; gap: 8px; justify-content: flex-end;">
+                <button onclick="closeExportModal()" style="background: none; border: none; color: white; padding: 8px 16px; cursor: pointer;">Cancel</button>
+                <button onclick="runExport()" id="export-confirm-btn" style="background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary); border: none; padding: 8px 16px; border-radius: 20px; font-weight: 600; cursor: pointer;">Export</button>
+            </div>
         </div>
-        <button id="nav-search-btn" onclick="toggleSearch()" class="flex flex-col items-center gap-1 group opacity-40 hover:opacity-100 transition-opacity">
-            <span class="material-symbols-outlined text-white group-hover:text-primary transition-colors">search</span>
-            <span class="text-[10px] font-medium text-white group-hover:text-primary transition-colors">Search</span>
+    </div>
+
+    <!-- EDITOR MODAL -->
+    <div id="editor-modal" style="position:fixed; inset:0; background:#111; z-index:500; display:none; flex-direction:column;">
+        <div style="padding:16px; display:flex; justify-content:space-between; align-items:center; background:#222;">
+            <div style="display:flex; gap:16px;">
+                <button onclick="closeEditor()" style="background:none; border:none; color:white;"><span class="material-symbols-outlined">close</span></button>
+                <div style="color:white; font-weight:bold;">Edit Image</div>
+            </div>
+            <div style="display:flex; gap:8px;">
+                <button onclick="setTool('pen')" id="tool-pen" style="padding:8px; border-radius:8px; border:none; cursor:pointer;"><span class="material-symbols-outlined">edit</span></button>
+                <button onclick="setTool('blur')" id="tool-blur" style="padding:8px; border-radius:8px; border:none; cursor:pointer;"><span class="material-symbols-outlined">blur_on</span></button>
+                <div style="width:1px; background:#444; margin:0 8px;"></div>
+                <button onclick="saveEditor()" id="save-editor-btn" style="background:var(--md-sys-color-primary); color:var(--md-sys-color-on-primary); padding:8px 16px; border-radius:20px; border:none; font-weight:bold; cursor:pointer;">Save</button>
+            </div>
+        </div>
+        <div style="flex:1; overflow:auto; display:flex; justify-content:center; align-items:center; position:relative; touch-action:none; background:#000;" id="canvas-container">
+            <canvas id="editor-canvas"></canvas>
+        </div>
+    </div>
+
+    <!-- FAB -->
+    <button class="md-fab" onclick="toggleSearch()">
+        <span class="material-symbols-outlined">search</span>
+    </button>
+
+    <!-- Bottom Navigation -->
+    <nav class="md-navbar">
+        <button class="md-nav-item active" onclick="switchView('view-dashboard', this)">
+            <div class="icon-container"><span class="material-symbols-outlined">dashboard</span></div>
+            <span>Dash</span>
         </button>
-        <button class="flex flex-col items-center gap-1 group opacity-40">
-            <span class="material-symbols-outlined text-white group-hover:text-primary transition-colors">settings</span>
-            <span class="text-[10px] font-medium text-white group-hover:text-primary transition-colors">Settings</span>
+        <button class="md-nav-item" onclick="switchView('view-gallery', this)">
+            <div class="icon-container"><span class="material-symbols-outlined">photo_library</span></div>
+            <span>Gallery</span>
+        </button>
+        <button class="md-nav-item" onclick="switchView('view-settings', this)">
+            <div class="icon-container"><span class="material-symbols-outlined">settings</span></div>
+            <span>Settings</span>
         </button>
     </nav>
-    <!-- Decorative background elements -->
-    <div class="fixed top-1/4 -left-20 size-64 bg-primary/5 blur-[100px] rounded-full -z-10"></div>
-    <div class="fixed bottom-1/4 -right-20 size-64 bg-neon-purple/5 blur-[100px] rounded-full -z-10"></div>
 
     <script>
-        // --- PWA Service Worker Registration ---
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/service-worker.js')
-                    .then((reg) => console.log('Service Worker Registered!', reg.scope))
-                    .catch((err) => console.log('Service Worker Registration Failed:', err));
+        // --- Navigation Logic ---
+        function switchView(viewId, navBtn) {
+            // Hide all views
+            document.querySelectorAll('.view-section').forEach(el => el.style.display = 'none');
+            // Show target
+            document.getElementById(viewId).style.display = 'block';
+
+            // Update Nav State (if triggered by nav button)
+            if (navBtn) {
+                document.querySelectorAll('.md-nav-item').forEach(el => el.classList.remove('active'));
+                navBtn.classList.add('active');
+            }
+
+            // Special Logic
+            if (viewId === 'view-gallery') {
+                loadCategories();
+            } else if (viewId === 'view-duplicates') {
+                loadDuplicates();
+            } else if (viewId === 'view-manage-categories') {
+                loadManageCategories();
+            }
+        }
+
+        function toggleSearch() {
+            const el = document.getElementById('search-overlay');
+            const isHidden = el.style.display === 'none';
+            el.style.display = isHidden ? 'flex' : 'none';
+            if (isHidden) document.getElementById('search-input').focus();
+        }
+
+        // --- Data Fetching ---
+        let dashboardData = null;
+
+        async function fetchData() {
+            try {
+                const res = await fetch('/api/dashboard');
+                dashboardData = await res.json();
+                renderDashboard(dashboardData);
+            } catch (e) {
+                console.error("Fetch failed", e);
+            }
+        }
+
+        function renderDashboard(data) {
+            // Stats
+            document.getElementById('stat-total').textContent = data.total_photos || 0;
+            document.getElementById('stat-storage').textContent = data.storage_usage || '0 MB';
+
+            // Recent List
+            const recentContainer = document.getElementById('recent-list');
+            recentContainer.innerHTML = data.recent.map(item => {
+                // Use the path provided by the API (which already includes /images/...)
+                // item.path comes from db_bridge as "/images/Category/filename.jpg"
+                const bgImage = `url('${item.path.replace("'", "\\'")}')`;
+                
+                // Title priority: AI Summary > Text Preview (truncated) > Category
+                let title = item.ai_summary || item.category;
+                if (!item.ai_summary && item.text_preview) {
+                    title = item.text_preview.substring(0, 50) + (item.text_preview.length > 50 ? '...' : '');
+                }
+
+                // Escape summary for usage in onclick string
+                const safeSummary = (item.ai_summary || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                
+                const thumbPath = `/thumbnails/${item.category}/${item.filename}`;
+                
+                return `
+                <div class="md-card md-card-clickable" onclick="openImage('${item.path}', '${item.name}', '${item.created_at}', '${safeSummary}', '${item.category}')" style="display: flex; gap: 16px; align-items: flex-start; padding: 12px;">
+                    <img src="${thumbPath}" onerror="this.src='${item.path}'" style="width: 64px; height: 64px; border-radius: 12px; object-fit: cover; background-color: #333; flex-shrink: 0;">
+                    <div style="flex: 1; min-width: 0;">
+                        <div style="font-weight: 600; font-size: 14px; margin-bottom: 4px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.3;">${title}</div>
+                        <div style="font-size: 12px; opacity: 0.7; display: flex; align-items: center; gap: 6px;">
+                            <span style="background: var(--md-sys-color-surface-container-high); padding: 2px 6px; border-radius: 4px;">${item.category}</span>
+                            <span>• ${new Date(item.created_at).toLocaleDateString()}</span>
+                        </div>
+                    </div>
+                    ${item.amount ? `<div style="color: var(--md-sys-color-primary); font-weight: 700; font-size: 14px;">$${item.amount}</div>` : ''}
+                </div>
+                `;
+            }).join('');
+
+            // Charts (Simplified)
+            if (window.Chart) {
+                renderCharts(data);
+            }
+        }
+
+        function renderCharts(data) {
+             const ctxActivity = document.getElementById('activityChart').getContext('2d');
+             if (window.chartActivity) window.chartActivity.destroy();
+             window.chartActivity = new Chart(ctxActivity, {
+                type: 'line',
+                data: {
+                    labels: data.activity.map(d => d.date.slice(5)),
+                    datasets: [{
+                        label: 'Screenshots',
+                        data: data.activity.map(d => d.count),
+                        borderColor: '#a8c7fa',
+                        tension: 0.4
+                    }]
+                },
+                options: { responsive: true, plugins: { legend: { display: false } } }
+             });
+
+             const ctxCat = document.getElementById('categoryChart').getContext('2d');
+             if (window.chartCat) window.chartCat.destroy();
+             window.chartCat = new Chart(ctxCat, {
+                type: 'doughnut',
+                data: {
+                    labels: data.categories.map(c => c.name),
+                    datasets: [{
+                        data: data.categories.map(c => c.count),
+                        backgroundColor: ['#a8c7fa', '#bec6dc', '#ddbce0', '#ffb4ab'],
+                        borderWidth: 0
+                    }]
+                },
+                options: { responsive: true, plugins: { legend: { display: false } } }
+             });
+        }
+
+        function loadCategories() {
+            if (!dashboardData || !dashboardData.categories) return;
+            const container = document.getElementById('category-list');
+            container.innerHTML = dashboardData.categories.map(cat => `
+                <div class="md-card md-card-clickable" onclick="openCategory('${cat.name}')" style="display: flex; flex-direction: column; align-items: center; justify-content: center; aspect-ratio: 1; text-align: center;">
+                    <span class="material-symbols-outlined" style="font-size: 32px; margin-bottom: 8px; color: var(--md-sys-color-primary);">folder</span>
+                    <div style="font-weight: 500;">${cat.name}</div>
+                    <div style="font-size: 12px; opacity: 0.7;">${cat.count} items</div>
+                </div>
+            `).join('');
+        }
+
+        async function openCategory(name, sort = 'date_desc') {
+            document.getElementById('cat-detail-title').textContent = name;
+            // Update select value if called programmatically
+            document.getElementById('sort-select').value = sort;
+            
+            switchView('view-category-details');
+            
+            const grid = document.getElementById('cat-detail-grid');
+            grid.innerHTML = '<div style="padding: 20px;">Loading...</div>';
+
+            try {
+                const res = await fetch(`/api/category/${name}?sort=${sort}`);
+                const data = await res.json();
+                
+                if (data.files.length === 0) {
+                     grid.innerHTML = '<div style="padding: 20px; text-align: center; opacity: 0.5;">No images found</div>';
+                     return;
+                }
+
+                grid.innerHTML = data.files.map(file => {
+                    // Safe AI Summary for onclick
+                    const safeSum = (file.ai_summary || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                    const thumbPath = `/thumbnails/${name}/${file.name}`;
+                    
+                    return `
+                    <div class="gallery-item" onclick="openImage('${file.path}', '${file.name}', '${file.created_at}', '${safeSum}', '${name}')">
+                        <img src="${thumbPath}" onerror="this.src='${file.path}'" loading="lazy">
+                        ${file.amount ? `<div style="position: absolute; bottom: 4px; right: 4px; background: rgba(0,0,0,0.7); color: #39ff14; font-size: 10px; padding: 2px 4px; border-radius: 4px; font-weight: bold;">$${file.amount}</div>` : ''}
+                    </div>
+                `}).join('');
+            } catch (e) {
+                console.error(e);
+                grid.innerHTML = 'Error loading category.';
+            }
+        }
+
+        let currentFile = { name: null, category: null };
+
+        function openImage(path, name, date, summary, category) {
+            currentFile = { name: name, category: category };
+            
+            // Fix path if it's full path
+            let src = path;
+            if (!src.startsWith('/')) src = '/images/' + path.split('/').pop(); 
+            
+            if (path.includes('/sdcard/Pictures/Screenshots/')) {
+                 src = path.replace('/sdcard/Pictures/Screenshots/', '/images/');
+            }
+            
+            document.getElementById('viewer-img').src = src;
+            document.getElementById('viewer-filename').textContent = name;
+            document.getElementById('viewer-date').textContent = date ? new Date(parseInt(date) || date).toLocaleString() : '';
+            
+            // Populate category select
+            const catSelect = document.getElementById('viewer-cat-select');
+            if (dashboardData && dashboardData.categories) {
+                catSelect.innerHTML = dashboardData.categories.map(c => 
+                    `<option value="${c.name}" ${c.name === category ? 'selected' : ''}>${c.name}</option>`
+                ).join('');
+                // Add Unsorted if not in list
+                if (!dashboardData.categories.find(c => c.name === 'Unsorted')) {
+                     catSelect.innerHTML += `<option value="Unsorted" ${category === 'Unsorted' ? 'selected' : ''}>Unsorted</option>`;
+                }
+            }
+
+            // Handle AI Summary display
+            const detailsDiv = document.getElementById('viewer-details');
+            // Remove old summary if exists
+            const oldSum = document.getElementById('viewer-summary');
+            if(oldSum) oldSum.remove();
+
+            if (summary && summary !== 'null' && summary !== '') {
+                const sumEl = document.createElement('p');
+                sumEl.id = 'viewer-summary';
+                sumEl.style.fontSize = '14px';
+                sumEl.style.marginTop = '8px';
+                sumEl.style.lineHeight = '1.4';
+                sumEl.innerHTML = `<strong>AI Note:</strong> ${summary}`;
+                detailsDiv.appendChild(sumEl);
+            }
+
+            document.getElementById('image-viewer').style.display = 'flex';
+        }
+
+        async function updateCategory() {
+            const newCat = document.getElementById('viewer-cat-select').value;
+            if (!currentFile.name || newCat === currentFile.category) return;
+
+            const btn = document.getElementById('move-btn');
+            const oldText = btn.textContent;
+            btn.textContent = 'Moving...';
+            btn.disabled = true;
+
+            try {
+                const res = await fetch('/api/move-file', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ filename: currentFile.name, newCategory: newCat })
+                });
+                const result = await res.json();
+                
+                if (result.success) {
+                    closeImageViewer();
+                    // Refresh data
+                    await fetchData();
+                    // If we were in category view, reload it
+                    const currentCatTitle = document.getElementById('cat-detail-title').textContent;
+                    const galleryVisible = document.getElementById('view-category-details').style.display === 'block';
+                    if (galleryVisible && currentCatTitle !== 'Category') {
+                         openCategory(currentCatTitle);
+                    }
+                } else {
+                    alert('Error: ' + (result.error || 'Unknown error'));
+                }
+            } catch (e) {
+                console.error(e);
+                alert('Failed to move file');
+            } finally {
+                btn.textContent = oldText;
+                btn.disabled = false;
+            }
+        }
+
+        function closeImageViewer() {
+            document.getElementById('image-viewer').style.display = 'none';
+        }
+
+        function toggleFilters() {
+            const el = document.getElementById('filter-panel');
+            el.style.display = el.style.display === 'none' ? 'flex' : 'none';
+            
+            // Populate categories if empty
+            const catSelect = document.getElementById('filter-category');
+            if (catSelect.options.length <= 1 && dashboardData && dashboardData.categories) {
+                dashboardData.categories.forEach(c => {
+                    const opt = document.createElement('option');
+                    opt.value = c.name;
+                    opt.textContent = c.name;
+                    catSelect.appendChild(opt);
+                });
+            }
+        }
+
+        async function performSearch() {
+            const q = document.getElementById('search-input').value;
+            const category = document.getElementById('filter-category').value;
+            const startDate = document.getElementById('filter-date-start').value;
+            const endDate = document.getElementById('filter-date-end').value;
+            const minAmount = document.getElementById('filter-amount-min').value;
+            const maxAmount = document.getElementById('filter-amount-max').value;
+            
+            // Allow empty query if filters are set
+            const hasFilters = category || startDate || endDate || minAmount || maxAmount;
+            if (q.length < 2 && !hasFilters) {
+                 document.getElementById('search-results').innerHTML = '';
+                 return;
+            }
+
+            const params = new URLSearchParams({
+                q: q,
+                category: category,
+                startDate: startDate,
+                endDate: endDate,
+                minAmount: minAmount,
+                maxAmount: maxAmount
+            });
+
+            try {
+                const res = await fetch(`/api/search?${params.toString()}`);
+                const data = await res.json();
+                
+                if (data.length === 0) {
+                     document.getElementById('search-results').innerHTML = '<div style="text-align:center; opacity:0.5; padding:20px;">No results found</div>';
+                     return;
+                }
+
+                document.getElementById('search-results').innerHTML = data.map(item => {
+                    const thumbPath = `/thumbnails/${item.category}/${item.filename}`;
+                    return `
+                    <div class="md-card md-card-clickable" onclick="openImage('${item.path}', '${item.filename}', '${item.created_at}', '', '${item.category}')">
+                        <div style="display:flex; gap:12px;">
+                             <img src="${thumbPath}" onerror="this.src='${item.path}'" style="width:48px; height:48px; border-radius:8px; object-fit:cover; background-color:#333; flex-shrink:0;">
+                             <div style="flex:1; min-width:0;">
+                                <div style="display:flex; justify-content:space-between;">
+                                    <div style="font-weight: 500;">${item.category}</div>
+                                    ${item.amount ? `<div style="color:var(--md-sys-color-primary); font-weight:700;">$${item.amount}</div>` : ''}
+                                </div>
+                                <div style="font-size: 12px; opacity: 0.7; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${item.text_snippet || 'No text'}</div>
+                                <div style="font-size: 10px; opacity: 0.5; margin-top:4px;">${new Date(item.created_at).toLocaleDateString()}</div>
+                             </div>
+                        </div>
+                    </div>
+                `}).join('');
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        // Search Logic
+        document.getElementById('search-input').addEventListener('input', performSearch);
+
+        function openExportModal() {
+            document.getElementById('export-modal').style.display = 'flex';
+            // Default to current month
+            const now = new Date();
+            const monthStr = now.toISOString().slice(0, 7);
+            document.getElementById('export-month-input').value = monthStr;
+        }
+
+        function closeExportModal() {
+            document.getElementById('export-modal').style.display = 'none';
+        }
+
+        async function runExport() {
+            const month = document.getElementById('export-month-input').value;
+            if (!month) return;
+
+            const btn = document.getElementById('export-confirm-btn');
+            const oldText = btn.textContent;
+            btn.textContent = 'Exporting...';
+            btn.disabled = true;
+
+            try {
+                const res = await fetch('/api/export', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ month: month })
+                });
+                const result = await res.json();
+                
+                if (result.success) {
+                    alert(`Export successful!\nFound ${result.count} items.\nSaved to: ${result.path}`);
+                    closeExportModal();
+                } else {
+                    alert('Error: ' + (result.error || 'Unknown error'));
+                }
+            } catch (e) {
+                console.error(e);
+                alert('Export failed');
+            } finally {
+                btn.textContent = oldText;
+                btn.disabled = false;
+            }
+        }
+
+        async function loadDuplicates() {
+            const container = document.getElementById('duplicates-list');
+            container.innerHTML = '<div style="padding:20px;">Scanning...</div>';
+            
+            try {
+                const res = await fetch('/api/duplicates');
+                const groups = await res.json();
+                
+                if (groups.length === 0) {
+                    container.innerHTML = '<div style="padding:20px; text-align:center;">No duplicates found!</div>';
+                    return;
+                }
+                
+                container.innerHTML = groups.map((group, idx) => `
+                    <div class="md-card">
+                        <div style="margin-bottom:12px; font-weight:500;">Group ${idx + 1}</div>
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+                            ${group.map(item => `
+                                <div style="display:flex; flex-direction:column; gap:8px;">
+                                    <img src="${item.path}" style="width:100%; border-radius:8px; aspect-ratio:9/16; object-fit:cover; background:#000;">
+                                    <div style="font-size:10px; opacity:0.7;">
+                                        <div>${new Date(item.created_at).toLocaleDateString()}</div>
+                                        <div style="word-break:break-all;">${item.filename}</div>
+                                    </div>
+                                    <button onclick="deleteFile('${item.filename}')" style="background:var(--md-sys-color-error); color:var(--md-sys-color-on-error); border:none; padding:6px; border-radius:8px; cursor:pointer;">Delete</button>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `).join('');
+            } catch (e) {
+                console.error(e);
+                container.innerHTML = 'Error loading duplicates.';
+            }
+        }
+
+        async function deleteFile(filename) {
+            if (!confirm('Are you sure you want to delete this file? This cannot be undone.')) return;
+            
+            try {
+                const res = await fetch(`/api/file/${filename}`, { method: 'DELETE' });
+                const result = await res.json();
+                if (result.success) {
+                    loadDuplicates(); // Refresh
+                } else {
+                    alert('Failed to delete: ' + result.error);
+                }
+            } catch (e) {
+                console.error(e);
+                alert('Error deleting file');
+            }
+        }
+
+        // Manage Categories
+        let userCategoriesConfig = {}; // Stores ONLY user overrides
+        let allCategories = {}; // Stores merged
+
+        async function loadManageCategories() {
+            const container = document.getElementById('manage-categories-list');
+            container.innerHTML = 'Loading...';
+            
+            try {
+                const res = await fetch('/api/categories');
+                const data = await res.json();
+                userCategoriesConfig = data.user || {};
+                allCategories = { ...data.defaults, ...userCategoriesConfig };
+                
+                renderManageCategories();
+            } catch (e) {
+                console.error(e);
+                container.innerHTML = 'Error loading categories.';
+            }
+        }
+
+        function renderManageCategories() {
+            const container = document.getElementById('manage-categories-list');
+            
+            // Sort keys
+            const keys = Object.keys(allCategories).sort();
+            
+            container.innerHTML = keys.map(cat => {
+                const isCustom = userCategoriesConfig.hasOwnProperty(cat);
+                const keywords = allCategories[cat].join(', ');
+                
+                return `
+                <div class="md-card">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                        <div style="font-weight:500;">${cat} ${isCustom ? '<span style="font-size:10px; background:var(--md-sys-color-tertiary); color:var(--md-sys-color-on-tertiary); padding:2px 4px; border-radius:4px;">CUSTOM</span>' : ''}</div>
+                        ${isCustom ? `<button onclick="deleteCategory('${cat}')" style="color:var(--md-sys-color-error); background:none; border:none; cursor:pointer;"><span class="material-symbols-outlined">delete</span></button>` : ''}
+                    </div>
+                    <div style="font-size:12px; color:#aaa; margin-bottom:4px;">Keywords:</div>
+                    <div style="display:flex; gap:8px;">
+                        <input type="text" id="keywords-${cat}" value="${keywords}" style="flex:1; padding:6px; border-radius:4px; background:#222; color:white; border:1px solid #444; font-size:12px;">
+                        <button onclick="updateCategoryKeywords('${cat}')" style="background:var(--md-sys-color-surface-container-high); color:white; border:none; padding:6px 12px; border-radius:4px; cursor:pointer;">Save</button>
+                    </div>
+                </div>
+                `;
+            }).join('');
+        }
+
+        async function updateCategoryKeywords(cat) {
+            const input = document.getElementById(`keywords-${cat}`);
+            const keywords = input.value.split(',').map(s => s.trim()).filter(s => s);
+            
+            // Update user config
+            userCategoriesConfig[cat] = keywords;
+            await saveCategoriesConfig();
+        }
+
+        async function addNewCategory() {
+            const name = document.getElementById('new-cat-name').value.trim();
+            const keysStr = document.getElementById('new-cat-keywords').value;
+            const keywords = keysStr.split(',').map(s => s.trim()).filter(s => s);
+            
+            if (!name || keywords.length === 0) {
+                alert('Name and keywords required');
+                return;
+            }
+            
+            userCategoriesConfig[name] = keywords;
+            await saveCategoriesConfig();
+            
+            // Clear inputs
+            document.getElementById('new-cat-name').value = '';
+            document.getElementById('new-cat-keywords').value = '';
+        }
+
+        async function deleteCategory(cat) {
+            if (!confirm(`Delete category "${cat}"?`)) return;
+            delete userCategoriesConfig[cat];
+            await saveCategoriesConfig();
+        }
+
+        async function saveCategoriesConfig() {
+            try {
+                const res = await fetch('/api/categories', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ categories: userCategoriesConfig })
+                });
+                const result = await res.json();
+                if (result.success) {
+                    loadManageCategories(); // Reload to refresh merge
+                } else {
+                    alert('Error saving');
+                }
+            } catch (e) {
+                console.error(e);
+                alert('Error saving');
+            }
+        }
+
+        // Editor Logic
+        let editorCanvas, editorCtx;
+        let isDrawing = false;
+        let currentTool = 'pen';
+        let startX, startY;
+        let originalImage = new Image();
+
+        function openEditor() {
+            if (!currentFile.name) return;
+            document.getElementById('editor-modal').style.display = 'flex';
+            
+            editorCanvas = document.getElementById('editor-canvas');
+            editorCtx = editorCanvas.getContext('2d');
+            
+            // Load image (use full path from currentFile)
+            // currentFile might just have name. We need path.
+            // openImage sets currentFile = { name, category }. 
+            // We can get src from viewer-img.
+            originalImage.src = document.getElementById('viewer-img').src;
+            
+            originalImage.onload = () => {
+                editorCanvas.width = originalImage.naturalWidth;
+                editorCanvas.height = originalImage.naturalHeight;
+                editorCtx.drawImage(originalImage, 0, 0);
+                setTool('pen');
+            };
+            
+            editorCanvas.onmousedown = startAction;
+            editorCanvas.onmousemove = moveAction;
+            editorCanvas.onmouseup = endAction;
+            
+            // Basic Touch Support
+            editorCanvas.ontouchstart = (e) => startAction(e.touches[0]);
+            editorCanvas.ontouchmove = (e) => { e.preventDefault(); moveAction(e.touches[0]); };
+            editorCanvas.ontouchend = (e) => endAction(e.changedTouches[0]);
+        }
+
+        function closeEditor() {
+            document.getElementById('editor-modal').style.display = 'none';
+        }
+
+        function setTool(tool) {
+            currentTool = tool;
+            ['pen', 'blur'].forEach(t => {
+                const el = document.getElementById(`tool-${t}`);
+                if (el) {
+                    el.style.background = (t === tool) ? 'var(--md-sys-color-primary)' : 'transparent';
+                    el.style.color = (t === tool) ? 'var(--md-sys-color-on-primary)' : 'white';
+                }
             });
         }
 
-        // --- Search Logic ---
-        function toggleSearch() {
-            const overlay = document.getElementById('search-overlay');
-            overlay.classList.toggle('hidden');
-            overlay.classList.toggle('flex');
-            if(!overlay.classList.contains('hidden')) {
-                document.getElementById('search-input').focus();
-            }
+        function getPos(e) {
+            const rect = editorCanvas.getBoundingClientRect();
+            const scaleX = editorCanvas.width / rect.width;
+            const scaleY = editorCanvas.height / rect.height;
+            return {
+                x: (e.clientX - rect.left) * scaleX,
+                y: (e.clientY - rect.top) * scaleY
+            };
         }
 
-        let searchTimeout;
-        function handleSearch(query) {
-            clearTimeout(searchTimeout);
-            const resultsDiv = document.getElementById('search-results');
+        function startAction(e) {
+            isDrawing = true;
+            const pos = getPos(e);
+            startX = pos.x;
+            startY = pos.y;
             
-            if (!query || query.length < 2) {
-                resultsDiv.innerHTML = `
-                    <div class="text-center text-white/30 mt-10">
-                        <span class="material-symbols-outlined text-4xl mb-2">manage_search</span>
-                        <p>Search your entire history by text or category.</p>
-                    </div>`;
-                return;
+            if (currentTool === 'pen') {
+                editorCtx.beginPath();
+                editorCtx.moveTo(startX, startY);
+                editorCtx.lineWidth = 10;
+                editorCtx.strokeStyle = 'rgba(255, 255, 0, 0.5)'; // Highlighter
+                editorCtx.lineCap = 'round';
+                editorCtx.globalCompositeOperation = 'source-over'; // 'multiply' doesn't work well on black bg sometimes, semi-transparent yellow is safer
             }
-
-            resultsDiv.innerHTML = '<div class="text-center text-white/50 mt-4">Searching...</div>';
-
-            searchTimeout = setTimeout(async () => {
-                try {
-                    const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
-                    const items = await res.json();
-                    
-                    if (items.length === 0) {
-                        resultsDiv.innerHTML = '<div class="text-center text-white/50 mt-10">No matches found.</div>';
-                        return;
-                    }
-
-                    resultsDiv.innerHTML = items.map(item => `
-                        <div class="glass p-3 rounded-xl flex gap-3 items-start animate-fade-in">
-                            <div class="size-16 rounded-lg bg-center bg-cover flex-shrink-0 bg-white/5" 
-                                 style="background-image: url('${item.path.replace("'", "\\'")}');"></div>
-                            <div class="flex-1 min-w-0">
-                                <div class="flex justify-between">
-                                    <h4 class="text-white font-medium text-sm truncate">${item.category}</h4>
-                                    ${item.amount ? `<span class="text-neon-lime text-xs font-bold">$${item.amount}</span>` : ''}
-                                </div>
-                                <p class="text-white/40 text-xs mt-1 line-clamp-2">${item.text_snippet || 'No text content'}</p>
-                                <p class="text-[10px] text-white/30 mt-2">${item.filename}</p>
-                            </div>
-                        </div>
-                    `).join('');
-
-                } catch (e) {
-                    console.error(e);
-                    resultsDiv.innerHTML = '<div class="text-red-400 text-center mt-4">Search failed.</div>';
-                }
-            }, 500); // 500ms debounce
         }
 
-        // --- Stats Logic ---
-        async function fetchStats() {
+        function moveAction(e) {
+            if (!isDrawing) return;
+            const pos = getPos(e);
+            
+            if (currentTool === 'pen') {
+                editorCtx.lineTo(pos.x, pos.y);
+                editorCtx.stroke();
+            }
+        }
+
+        function endAction(e) {
+            if (!isDrawing) return;
+            isDrawing = false;
+            const pos = getPos(e);
+            
+            if (currentTool === 'blur') {
+                const w = pos.x - startX;
+                const h = pos.y - startY;
+                if (Math.abs(w) > 5 && Math.abs(h) > 5) {
+                    editorCtx.globalCompositeOperation = 'source-over';
+                    editorCtx.fillStyle = '#000'; // Redact style
+                    editorCtx.fillRect(startX, startY, w, h);
+                }
+            }
+        }
+
+        async function saveEditor() {
+            const btn = document.getElementById('save-editor-btn');
+            btn.textContent = 'Saving...';
+            btn.disabled = true;
+            
             try {
-                const response = await fetch('/api/stats');
-                const data = await response.json();
-
-                // 1. Update Hero
-                // Assuming we want to show total files or new files. 
-                // For now, let's show total files as "files to review" or just total managed.
-                // Or better, let's mock "New" as a random small number for the vibe, or 0.
-                const newFiles = Math.floor(Math.random() * 5); // Mock "New"
-                const heroTextHTML = `You have <span class="text-primary font-bold">${data.total_photos} items</span> in your vault.`;
-                const heroHeader = document.querySelector('header h2');
-                if(heroHeader) {
-                    heroHeader.innerHTML = `Good Afternoon.<br/><span class="text-white">${heroTextHTML}</span>`;
+                // Use JPEG to save space
+                const dataUrl = editorCanvas.toDataURL('image/jpeg', 0.85);
+                const res = await fetch('/api/save-image', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ filename: currentFile.name, image_data: dataUrl })
+                });
+                const result = await res.json();
+                if (result.success) {
+                    // Reload viewer image with cache bust
+                    const img = document.getElementById('viewer-img');
+                    const src = img.src.split('?')[0];
+                    img.src = src + '?t=' + new Date().getTime();
+                    closeEditor();
+                } else {
+                    alert('Save failed: ' + result.error);
                 }
-
-                // 2. Update Storage
-                const storageEl = document.querySelector('#storage-amount');
-                if (storageEl) storageEl.textContent = data.storage_usage.replace(' GB', ''); // Keep just number if needed, or update full
-
-                // Update the full block for storage if IDs were hard to place on specific spans:
-                const storageWidget = document.querySelector('.glass .text-5xl');
-                if(storageWidget) storageWidget.textContent = parseFloat(data.storage_usage).toFixed(1);
-
-                // 3. Update Pie Chart Center
-                const pieCenter = document.querySelector('.pie-chart-conic span.text-xl');
-                if(pieCenter) pieCenter.textContent = data.total_photos;
-
-                // 4. Update Categories List
-                const catContainer = document.querySelector('.pie-chart-conic').parentElement.parentElement.nextElementSibling;
-                if(catContainer) {
-                    catContainer.innerHTML = ''; // Clear hardcoded
-                    const colors = ['bg-primary', 'bg-neon-purple', 'bg-neon-lime', 'bg-yellow-400', 'bg-red-400'];
-                    const shadows = ['#2877f6', '#bc13fe', '#39ff14', '#facc15', '#f87171'];
-                    
-                    data.categories.slice(0, 3).forEach((cat, index) => {
-                        const color = colors[index % colors.length];
-                        const shadow = shadows[index % shadows.length];
-                        const html = `
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-center gap-2">
-                                    <span class="size-2 rounded-full ${color} shadow-[0_0_8px_${shadow}]"></span>
-                                    <span class="text-sm font-medium text-white/80">${cat.name}</span>
-                                </div>
-                                <span class="text-sm font-bold">${cat.percentage}%</span>
-                            </div>
-                        `;
-                        catContainer.innerHTML += html;
-                    });
-                }
-
-                // 5. Update Insights
-                const insightsContainer = document.getElementById('insights-container');
-                if(insightsContainer && data.insights.length > 0) {
-                    insightsContainer.innerHTML = '';
-                    data.insights.forEach(item => {
-                        const html = `
-                            <div class="glass p-4 rounded-2xl flex items-center gap-4">
-                                <div class="size-16 rounded-xl bg-center bg-cover border border-white/10" 
-                                     style="background-image: url('${item.image.replace("'", "\\'")}');"></div>
-                                <div class="flex-1">
-                                    <div class="flex justify-between items-start">
-                                        <p class="text-sm font-semibold text-white">${item.title}</p>
-                                        <span class="text-[10px] bg-white/10 text-white/80 px-2 py-0.5 rounded-full font-bold uppercase">${item.category}</span>
-                                    </div>
-                                    <p class="text-xs text-white/60 mt-1">${item.detail}</p>
-                                    <p class="text-[10px] text-white/40 mt-1">${new Date(item.time).toLocaleTimeString()}</p>
-                                </div>
-                                <span class="material-symbols-outlined text-white/30">chevron_right</span>
-                            </div>
-                        `;
-                        insightsContainer.innerHTML += html;
-                    });
-                } else if (insightsContainer) {
-                    insightsContainer.innerHTML = '<div class="p-4 text-center text-white/40 text-sm">No recent insights found.</div>';
-                }
-
             } catch (e) {
-                console.error("Failed to fetch stats", e);
+                console.error(e);
+                alert('Save failed');
+            } finally {
+                btn.textContent = 'Save';
+                btn.disabled = false;
             }
         }
 
-        // Init
-        fetchStats();
+        async function generateKB() {
+            if(!confirm("Generate Knowledge Base (Markdown files)? This might take a moment.")) return;
+            
+            try {
+                const res = await fetch('/api/generate-kb', { method: 'POST' });
+                const result = await res.json();
+                if(result.success) {
+                    alert(`Knowledge Base generated!\nFiles: ${result.count}\nPath: ${result.path}`);
+                } else {
+                    alert('Error: ' + result.error);
+                }
+            } catch(e) {
+                console.error(e);
+                alert('Request failed');
+            }
+        }
+
+        // Initialize
+        fetchData();
+        
+        // Service Worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/service-worker.js');
+        }
     </script>
 </body>
 </html>

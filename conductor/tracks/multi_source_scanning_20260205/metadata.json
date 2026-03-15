@@ -1,0 +1,8 @@
+{
+  "id": "multi_source_scanning_20260205",
+  "name": "Multi-Source Scanning Support",
+  "description": "Extend the scanning capability to support multiple source directories (e.g., Downloads, WhatsApp Images) beyond just the default Screenshots folder.",
+  "status": "planned",
+  "created_at": "2026-02-05",
+  "priority": "high"
+}

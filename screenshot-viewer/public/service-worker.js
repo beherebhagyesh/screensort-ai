@@ -1,14 +1,14 @@
-const CACHE_NAME = 'screenshot-organizer-v2';
-const DYNAMIC_CACHE_NAME = 'site-dynamic-v2';
+const CACHE_NAME = 'screenshot-organizer-v3';
+const DYNAMIC_CACHE_NAME = 'site-dynamic-v3';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
+  '/styles.css',
   '/manifest.json',
   '/icons/icon-192.png',
   '/icons/icon-512.png',
-  'https://cdn.tailwindcss.com?plugins=forms,container-queries',
-  'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap',
-  'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap'
+  'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap',
+  'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0'
 ];
 
 self.addEventListener('install', (evt) => {

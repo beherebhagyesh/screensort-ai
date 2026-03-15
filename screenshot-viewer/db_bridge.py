@@ -2,8 +2,16 @@ import sqlite3
 import sys
 import json
 import os
+import shutil
+import csv
+import base64
+from datetime import datetime
 
-DB_PATH = "../screenshots.db"
+# Resolve DB path relative to this script (one level up)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DB_PATH = os.path.join(BASE_DIR, "../screenshots.db")
+# Destination root
+SCREENSHOTS_DIR = '/sdcard/Pictures/Screenshots'
 
 def get_db():
     try:
@@ -13,6 +21,64 @@ def get_db():
     except Exception as e:
         print(json.dumps({"error": str(e)}))
         sys.exit(1)
+
+def move_file(filename, new_category):
+    conn = get_db()
+    c = conn.cursor()
+    
+    # 1. Get current path
+    c.execute("SELECT path, category FROM screenshots WHERE filename = ?", (filename,))
+    row = c.fetchone()
+    if not row:
+        print(json.dumps({"error": "File not found in database"}))
+        return
+
+    old_path = row['path']
+    old_category = row['category']
+    
+    if old_category == new_category:
+        print(json.dumps({"success": True, "message": "Already in this category"}))
+        return
+
+    # 2. Construct new path
+    dest_dir = os.path.join(SCREENSHOTS_DIR, new_category)
+    if not os.path.exists(dest_dir):
+        os.makedirs(dest_dir, exist_ok=True)
+    
+    new_path = os.path.join(dest_dir, filename)
+    
+    # Handle collision
+    if os.path.exists(new_path):
+        import time
+        base, ext = os.path.splitext(filename)
+        new_filename = f"{base}_{int(time.time())}{ext}"
+        new_path = os.path.join(dest_dir, new_filename)
+        final_filename = new_filename
+    else:
+        final_filename = filename
+
+    # 3. Move file
+    try:
+        if os.path.exists(old_path):
+            shutil.move(old_path, new_path)
+        else:
+            # Maybe the path in DB is outdated but file exists in expected old location?
+            # Or maybe it's already gone.
+            print(json.dumps({"error": f"Physical file not found at {old_path}"}))
+            return
+            
+    except Exception as e:
+        print(json.dumps({"error": f"Move failed: {str(e)}"}))
+        return
+
+    # 4. Update DB
+    try:
+        c.execute("UPDATE screenshots SET path = ?, category = ?, filename = ? WHERE filename = ?", 
+                  (new_path, new_category, final_filename, filename))
+        conn.commit()
+        print(json.dumps({"success": True, "new_path": new_path, "new_filename": final_filename}))
+    except Exception as e:
+        print(json.dumps({"error": f"DB update failed: {str(e)}"}))
 
 def get_stats():
     conn = get_db()
@@ -47,19 +113,125 @@ def get_stats():
         
     print(json.dumps({
         "total_photos": total_files,
-        "storage_usage": "Calculating...", # We don't track file size in DB yet, maybe add later
+        "storage_usage": "Calculating...",
         "categories": categories,
         "insights": insights
     }))
 
-def search(query):
+def get_dashboard_data():
     conn = get_db()
     c = conn.cursor()
     
-    # Full text search (simple LIKE for now)
-    sql = "SELECT * FROM screenshots WHERE text LIKE ? OR category LIKE ? ORDER BY created_at DESC LIMIT 50"
+    # 1. Activity (Last 14 Days)
+    # created_at is in milliseconds
+    sql_activity = """
+        SELECT strftime('%Y-%m-%d', datetime(created_at/1000, 'unixepoch', 'localtime')) as date, count(*) as count
+        FROM screenshots 
+        GROUP BY date 
+        ORDER BY date DESC 
+        LIMIT 14
+    """
+    c.execute(sql_activity)
+    activity_data = [{"date": r['date'], "count": r['count']} for r in c.fetchall()]
+    # Reverse to show chronological order in graphs
+    activity_data.reverse()
+
+    # 2. Finance/Spending (Last 30 Days)
+    sql_finance = """
+        SELECT strftime('%Y-%m-%d', datetime(created_at/1000, 'unixepoch', 'localtime')) as date, sum(amount) as total
+        FROM screenshots 
+        WHERE amount IS NOT NULL AND amount > 0
+        GROUP BY date
+        ORDER BY date DESC 
+        LIMIT 30
+    """
+    c.execute(sql_finance)
+    finance_data = [{"date": r['date'], "total": r['total']} for r in c.fetchall()]
+    finance_data.reverse()
+
+    # 3. Category Breakdown (All time)
+    c.execute("SELECT category, count(*) as count FROM screenshots GROUP BY category ORDER BY count DESC")
+    categories = [{"name": r['category'], "count": r['count']} for r in c.fetchall()]
+
+    # 4. Language Distribution
+    c.execute("SELECT detected_language, count(*) as count FROM screenshots WHERE detected_language IS NOT NULL GROUP BY detected_language")
+    languages = [{"lang": r['detected_language'], "count": r['count']} for r in c.fetchall()]
+
+    # 5. Recent Files (Extended)
+    c.execute("SELECT * FROM screenshots ORDER BY created_at DESC LIMIT 6")
+    recent = []
+    for r in c.fetchall():
+        recent.append({
+            "id": r['id'],
+            "filename": r['filename'],
+            "category": r['category'],
+            "text_preview": r['text'][:60] + "..." if r['text'] else "",
+            "amount": r['amount'],
+            "created_at": r['created_at'],
+            "ai_summary": r['ai_summary'],
+            "is_video": r['is_video'],
+            "path": r['path'].replace('/sdcard/Pictures/Screenshots', '/images')
+        })
+
+    print(json.dumps({
+        "activity": activity_data,
+        "finance": finance_data,
+        "categories": categories,
+        "languages": languages,
+        "recent": recent
+    }))
+
+def search(query, filters_json="{}"):
+    try:
+        filters = json.loads(filters_json)
+    except:
+        filters = {}
+
+    conn = get_db()
+    c = conn.cursor()
+    
+    # Base query
+    sql = "SELECT * FROM screenshots WHERE (text LIKE ? OR category LIKE ? OR ai_summary LIKE ?)"
     term = f"%{query}%"
-    c.execute(sql, (term, term))
+    params = [term, term, term]
+    
+    # Apply filters
+    if filters.get('category') and filters['category'] != "":
+        sql += " AND category = ?"
+        params.append(filters['category'])
+        
+    if filters.get('minAmount'):
+        try:
+            sql += " AND amount >= ?"
+            params.append(float(filters['minAmount']))
+        except ValueError: pass
+        
+    if filters.get('maxAmount'):
+        try:
+            sql += " AND amount <= ?"
+            params.append(float(filters['maxAmount']))
+        except ValueError: pass
+        
+    if filters.get('startDate'):
+        try:
+            dt = datetime.strptime(filters['startDate'], "%Y-%m-%d")
+            ts = int(dt.timestamp() * 1000)
+            sql += " AND created_at >= ?"
+            params.append(ts)
+        except ValueError: pass
+        
+    if filters.get('endDate'):
+        try:
+            dt = datetime.strptime(filters['endDate'], "%Y-%m-%d")
+            dt = dt.replace(hour=23, minute=59, second=59)
+            ts = int(dt.timestamp() * 1000)
+            sql += " AND created_at <= ?"
+            params.append(ts)
+        except ValueError: pass
+
+    sql += " ORDER BY created_at DESC LIMIT 50"
+    
+    c.execute(sql, params)
     
     results = []
     for r in c.fetchall():
@@ -68,10 +240,294 @@ def search(query):
             "category": r['category'],
             "path": r['path'].replace('/sdcard/Pictures/Screenshots', '/images'),
             "text_snippet": r['text'][:100] if r['text'] else "",
-            "amount": r['amount']
+            "amount": r['amount'],
+            "created_at": r['created_at']
         })
     
     print(json.dumps(results))
+
+def get_category_files(category, sort_by="date_desc"):
+    conn = get_db()
+    c = conn.cursor()
+    
+    order_clause = "created_at DESC"
+    if sort_by == "date_asc":
+        order_clause = "created_at ASC"
+    elif sort_by == "name_asc":
+        order_clause = "filename ASC"
+    elif sort_by == "name_desc":
+        order_clause = "filename DESC"
+    elif sort_by == "amount_desc":
+        order_clause = "amount DESC NULLS LAST"
+
+    sql = f"SELECT * FROM screenshots WHERE category = ? ORDER BY {order_clause}"
+    c.execute(sql, (category,))
+    
+    files = []
+    for r in c.fetchall():
+        files.append({
+            "name": r['filename'],
+            "path": r['path'].replace('/sdcard/Pictures/Screenshots', '/images'),
+            "created_at": r['created_at'],
+            "ai_summary": r['ai_summary'],
+            "amount": r['amount']
+        })
+    
+    print(json.dumps({"files": files}))
+
+def export_expenses(year_month):
+    # year_month format: "YYYY-MM"
+    try:
+        dt = datetime.strptime(year_month, "%Y-%m")
+        year = dt.year
+        month = dt.month
+        
+        start_ts = int(dt.timestamp() * 1000)
+        
+        # Next month calculation
+        if month == 12:
+            next_month_dt = datetime(year + 1, 1, 1)
+        else:
+            next_month_dt = datetime(year, month + 1, 1)
+            
+        end_ts = int(next_month_dt.timestamp() * 1000) - 1
+        
+        conn = get_db()
+        c = conn.cursor()
+        
+        c.execute('''SELECT * FROM screenshots 
+                     WHERE category='Finance' 
+                     AND created_at BETWEEN ? AND ? 
+                     ORDER BY created_at ASC''', (start_ts, end_ts))
+                     
+        rows = c.fetchall()
+        
+        # Ensure export dir
+        export_dir = os.path.join(SCREENSHOTS_DIR, "Exports")
+        os.makedirs(export_dir, exist_ok=True)
+        
+        filename = f"expenses_{year_month}.csv"
+        filepath = os.path.join(export_dir, filename)
+        
+        with open(filepath, 'w', newline='') as csvfile:
+            writer = csv.writer(csvfile)
+            writer.writerow(['Date', 'Amount', 'Filename', 'Summary', 'Text Snippet'])
+            
+            for r in rows:
+                date_str = datetime.fromtimestamp(r['created_at'] / 1000).strftime('%Y-%m-%d %H:%M:%S')
+                writer.writerow([
+                    date_str,
+                    r['amount'] if r['amount'] else 0,
+                    r['filename'],
+                    r['ai_summary'] or "",
+                    (r['text'] or "")[:100].replace('\n', ' ')
+                ])
+                
+        # Return path relative to public dir if possible, or absolute
+        # Web viewer serves /images mapped to SCREENSHOTS_DIR
+        web_path = f"/images/Exports/{filename}"
+        print(json.dumps({"success": True, "path": filepath, "url": web_path, "count": len(rows)}))
+        
+    except Exception as e:
+        print(json.dumps({"error": str(e)}))
+
+def find_duplicates():
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("SELECT id, filename, path, phash, created_at, category, amount FROM screenshots WHERE phash IS NOT NULL ORDER BY created_at DESC")
+    rows = c.fetchall()
+    
+    images = []
+    for r in rows:
+        try:
+            val = int(r['phash'], 16)
+            images.append({
+                "id": r['id'],
+                "filename": r['filename'],
+                "path": r['path'].replace('/sdcard/Pictures/Screenshots', '/images'),
+                "phash": val,
+                "created_at": r['created_at'],
+                "category": r['category'],
+                "amount": r['amount']
+            })
+        except: pass
+        
+    groups = []
+    processed = set()
+    
+    # Optimization: Sort by phash value to check nearby hashes? 
+    # No, Hamming distance is not linear. 
+    # We will just do brute force O(N^2) but optimized by skipping processed.
+    # Limit to comparing against last 1000 items to avoid timeouts on huge libraries.
+    
+    for i, img1 in enumerate(images):
+        if img1['id'] in processed:
+            continue
+            
+        current_group = [img1]
+        
+        # Check against others
+        # Heuristic: Check next 500 items (since sorted by date, duplicates are usually close in time)
+        # OR just check all if N < 1000.
+        
+        search_range = range(i + 1, len(images))
+        if len(images) > 1000:
+             search_range = range(i + 1, min(i + 500, len(images)))
+        
+        for j in search_range:
+            img2 = images[j]
+            if img2['id'] in processed:
+                continue
+            
+            # Distance
+            dist = bin(img1['phash'] ^ img2['phash']).count('1')
+            if dist <= 4: # Threshold 4 bits (more strict)
+                current_group.append(img2)
+                processed.add(img2['id'])
+        
+        if len(current_group) > 1:
+            groups.append(current_group)
+            processed.add(img1['id'])
+            
+    print(json.dumps(groups))
+
+def delete_file(filename):
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("SELECT path FROM screenshots WHERE filename = ?", (filename,))
+    row = c.fetchone()
+    if not row:
+        print(json.dumps({"error": "File not found"}))
+        return
+        
+    path = row['path']
+    try:
+        if os.path.exists(path):
+            os.remove(path)
+        c.execute("DELETE FROM screenshots WHERE filename = ?", (filename,))
+        conn.commit()
+        print(json.dumps({"success": True}))
+    except Exception as e:
+        print(json.dumps({"error": str(e)}))
+
+def get_categories():
+    # Add parent dir to path to import sort_screenshots
+    sys.path.append(os.path.join(BASE_DIR, ".."))
+    
+    defaults = {}
+    try:
+        import sort_screenshots
+        defaults = sort_screenshots.DEFAULT_CATEGORIES
+    except Exception as e:
+        # Fallback if import fails
+        defaults = {} 
+
+    user_cats = {}
+    config_path = os.path.join(BASE_DIR, "../user_categories.json")
+    if os.path.exists(config_path):
+        try:
+            with open(config_path, 'r') as f:
+                user_cats = json.load(f)
+        except: pass
+        
+    print(json.dumps({"defaults": defaults, "user": user_cats}))
+
+def save_categories(cats_json):
+    config_path = os.path.join(BASE_DIR, "../user_categories.json")
+    try:
+        # Validate JSON
+        cats = json.loads(cats_json)
+        with open(config_path, 'w') as f:
+            json.dump(cats, f, indent=4)
+        print(json.dumps({"success": True}))
+    except Exception as e:
+        print(json.dumps({"error": str(e)}))
+
+def save_image_data(filename, b64_data):
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("SELECT path, category FROM screenshots WHERE filename = ?", (filename,))
+    row = c.fetchone()
+    if not row:
+        print(json.dumps({"error": "File not found"}))
+        return
+        
+    path = row['path']
+    category = row['category']
+    
+    try:
+        # b64_data might have header "data:image/png;base64,..."
+        if "," in b64_data:
+            b64_data = b64_data.split(",")[1]
+            
+        with open(path, "wb") as f:
+            f.write(base64.b64decode(b64_data))
+            
+        # Regenerate thumbnail
+        sys.path.append(os.path.join(BASE_DIR, ".."))
+        try:
+            import sort_screenshots
+            sort_screenshots.SOURCE_DIR = SCREENSHOTS_DIR
+            sort_screenshots.generate_thumbnail(path, category)
+        except Exception as e:
+            pass # Ignore import errors
+            
+        print(json.dumps({"success": True}))
+    except Exception as e:
+        print(json.dumps({"error": str(e)}))
+
+    except Exception as e:
+        print(json.dumps({"error": str(e)}))
+
+def generate_kb():
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("SELECT * FROM screenshots")
+    rows = c.fetchall()
+    
+    kb_dir = os.path.join(SCREENSHOTS_DIR, "knowledge_base")
+    os.makedirs(kb_dir, exist_ok=True)
+    
+    count = 0
+    for r in rows:
+        category = r['category'] or "Unsorted"
+        cat_dir = os.path.join(kb_dir, category)
+        os.makedirs(cat_dir, exist_ok=True)
+        
+        try:
+            date_str = datetime.fromtimestamp(r['created_at'] / 1000).strftime('%Y-%m-%d')
+        except:
+            date_str = "0000-00-00"
+            
+        safe_name = os.path.splitext(r['filename'])[0].replace(" ", "_")
+        md_name = f"{date_str}_{safe_name}.md"
+        md_path = os.path.join(cat_dir, md_name)
+        
+        rel_img_path = f"../../{category}/{r['filename']}"
+        
+        content = f"""---
+date: {date_str}
+amount: {r['amount'] or 0}
+tags: [{category}]
+---
+
+# {r['ai_summary'] or r['filename']}
+
+![Image]({rel_img_path})
+
+## AI Summary
+{r['ai_summary'] or "N/A"}
+
+## Extracted Text
+```text
+{r['text'] or ""}
+```
+"""
+        with open(md_path, "w") as f:
+            f.write(content)
+        count += 1
+        
+    print(json.dumps({"success": True, "count": count, "path": kb_dir}))
 
 def main():
     if len(sys.argv) < 2:
@@ -82,11 +538,55 @@ def main():
     
     if command == "stats":
         get_stats()
+    elif command == "dashboard_data":
+        get_dashboard_data()
     elif command == "search":
         if len(sys.argv) < 3:
             print(json.dumps([]))
         else:
-            search(sys.argv[2])
+            query = sys.argv[2]
+            filters = sys.argv[3] if len(sys.argv) > 3 else "{}"
+            search(query, filters)
+    elif command == "get_category_files":
+        if len(sys.argv) < 3:
+            print(json.dumps({"error": "Missing category"}))
+        else:
+            cat = sys.argv[2]
+            sort = sys.argv[3] if len(sys.argv) > 3 else "date_desc"
+            get_category_files(cat, sort)
+    elif command == "move_file":
+        if len(sys.argv) < 4:
+            print(json.dumps({"error": "Missing filename or category"}))
+        else:
+            filename = sys.argv[2]
+            new_cat = sys.argv[3]
+            move_file(filename, new_cat)
+    elif command == "export_expenses":
+        if len(sys.argv) < 3:
+            print(json.dumps({"error": "Missing year-month (YYYY-MM)"}))
+        else:
+            export_expenses(sys.argv[2])
+    elif command == "find_duplicates":
+        find_duplicates()
+    elif command == "delete_file":
+        if len(sys.argv) < 3:
+            print(json.dumps({"error": "Missing filename"}))
+        else:
+            delete_file(sys.argv[2])
+    elif command == "get_categories":
+        get_categories()
+    elif command == "save_categories":
+        if len(sys.argv) < 3:
+            print(json.dumps({"error": "Missing config JSON"}))
+        else:
+            save_categories(sys.argv[2])
+    elif command == "save_image_data":
+        if len(sys.argv) < 4:
+            print(json.dumps({"error": "Missing filename or data"}))
+        else:
+            save_image_data(sys.argv[2], sys.argv[3])
+    elif command == "generate_kb":
+        generate_kb()
     else:
         print(json.dumps({"error": "Unknown command"}))
 
