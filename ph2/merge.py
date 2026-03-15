@@ -49,13 +49,8 @@ def build_off_index(off_data):
     if not off_data:
         return {}
     idx = {}
-    for sku in off_data.get("sku_results", []):
-        pnum = sku.get("packet_num")
-        if pnum is not None:
-            idx[pnum] = sku
-    # also try sku_matches key
-    for sku in off_data.get("sku_matches", []):
-        pnum = sku.get("packet_num")
+    for sku in off_data.get("sku_matches", []) + off_data.get("sku_results", []):
+        pnum = sku.get("ph1_packet_num") or sku.get("packet_num")
         if pnum is not None and pnum not in idx:
             idx[pnum] = sku
     return idx
@@ -67,26 +62,43 @@ def build_serper_index(serper_data):
         return {}
     idx = {}
     for sku in serper_data.get("sku_results", []):
-        pnum = sku.get("packet_num")
+        pnum = sku.get("ph1_packet_num") or sku.get("packet_num")
         if pnum is not None:
             idx[pnum] = sku
     return idx
 
 
 def build_indiamart_index(indiamart_data):
-    """Index IndiaMART results by brand name (normalised lowercase)."""
+    """Build brand-presence index from IndiaMART Playwright scrape output."""
     if not indiamart_data:
         return {}
     idx = {}
-    for entry in indiamart_data.get("brand_results", []):
-        brand = entry.get("brand", "")
-        if brand:
-            idx[brand.lower()] = entry
-    # also try top-level keys like 'results'
-    for entry in indiamart_data.get("results", []):
-        brand = entry.get("brand", "")
-        if brand and brand.lower() not in idx:
-            idx[brand.lower()] = entry
+    # New Playwright format: top-level surya/balaji flags + suppliers list
+    surya_found = indiamart_data.get("surya_found_on_indiamart", False)
+    suppliers = indiamart_data.get("suppliers", [])
+    catalogue = indiamart_data.get("catalogue_products", [])
+    price_mentions = indiamart_data.get("price_mentions", [])
+
+    # Build a combined text corpus to detect brand presence
+    all_text = " ".join(
+        [s.get("raw_text", "") + " " + s.get("company", "") for s in suppliers]
+        + [p.get("name", "") for p in catalogue]
+    ).lower()
+
+    balaji_found = "balaji" in all_text or len(suppliers) > 0
+    idx["balaji"] = {
+        "present": balaji_found,
+        "suppliers_count": len(suppliers),
+        "catalogue_count": len(catalogue),
+        "price_mentions": price_mentions,
+        "company_info": indiamart_data.get("balaji_company_info", {}),
+    }
+    idx["balaji wafers"] = idx["balaji"]
+    idx["surya"] = {
+        "present": surya_found,
+        "suppliers_count": sum(1 for s in suppliers if "surya" in s.get("raw_text", "").lower()),
+        "price_mentions": price_mentions,
+    }
     return idx
 
 
@@ -115,14 +127,13 @@ def enrich_packet(packet, off_idx, fssai_idx, indiamart_idx, serper_idx):
 
     # ── Open Food Facts ──────────────────────────────────────────
     off_match = off_idx.get(pnum)
-    if off_match:
+    if off_match and off_match.get("match_found"):
         enriched["off_matched"] = True
-        enriched["off_product_name"] = off_match.get("product_name") or off_match.get("off_product_name")
-        enriched["off_barcode"] = off_match.get("barcode") or off_match.get("off_barcode")
-        # nutrition may be nested
-        nutrition = off_match.get("nutrition") or {}
+        enriched["off_product_name"] = off_match.get("off_product_name") or off_match.get("product_name")
+        enriched["off_barcode"] = off_match.get("off_barcode") or off_match.get("barcode")
+        nutrition = off_match.get("off_nutrition") or off_match.get("nutrition") or {}
         enriched["off_nutrition"] = nutrition if nutrition else None
-        enriched["off_ingredients_verified"] = off_match.get("ingredients_verified") or off_match.get("ingredients_text") or None
+        enriched["off_ingredients_verified"] = off_match.get("off_ingredients") or off_match.get("ingredients_text") or None
     else:
         enriched["off_matched"] = False
         enriched["off_product_name"] = None
@@ -142,34 +153,37 @@ def enrich_packet(packet, off_idx, fssai_idx, indiamart_idx, serper_idx):
     # ── IndiaMART ─────────────────────────────────────────────────
     indiamart_match = indiamart_idx.get(brand)
     if not indiamart_match:
-        # try partial match
         for key in indiamart_idx:
             if brand in key or key in brand:
                 indiamart_match = indiamart_idx[key]
                 break
-    if indiamart_match:
-        enriched["indiamart_wholesale_price"] = indiamart_match.get("wholesale_price") or indiamart_match.get("price")
-        enriched["indiamart_moq"] = indiamart_match.get("moq") or indiamart_match.get("minimum_order_quantity")
-        enriched["indiamart_supplier"] = indiamart_match.get("supplier") or indiamart_match.get("company_name")
+    if indiamart_match and indiamart_match.get("present"):
+        enriched["indiamart_present"] = True
+        enriched["indiamart_suppliers_count"] = indiamart_match.get("suppliers_count", 0)
+        enriched["indiamart_price_mentions"] = indiamart_match.get("price_mentions", [])
     else:
-        enriched["indiamart_wholesale_price"] = None
-        enriched["indiamart_moq"] = None
-        enriched["indiamart_supplier"] = None
+        enriched["indiamart_present"] = False
+        enriched["indiamart_suppliers_count"] = 0
+        enriched["indiamart_price_mentions"] = []
 
     # ── Serper ────────────────────────────────────────────────────
     serper_match = serper_idx.get(pnum)
-    if serper_match:
+    if serper_match and serper_match.get("online_presence"):
         enriched["serper_online_presence"] = True
-        enriched["serper_price"] = serper_match.get("price")
-        enriched["serper_source"] = serper_match.get("source") or serper_match.get("link")
-        enriched["serper_rating"] = serper_match.get("rating")
-        enriched["serper_reviews"] = serper_match.get("reviews") or serper_match.get("review_count")
+        results = serper_match.get("results", [])
+        top = results[0] if results else {}
+        enriched["serper_price"] = top.get("price")
+        enriched["serper_source"] = top.get("source") or top.get("link")
+        enriched["serper_rating"] = top.get("rating")
+        enriched["serper_reviews"] = top.get("reviews") or top.get("ratingCount")
+        enriched["serper_results_count"] = serper_match.get("results_count", 0)
     else:
         enriched["serper_online_presence"] = False
         enriched["serper_price"] = None
         enriched["serper_source"] = None
         enriched["serper_rating"] = None
         enriched["serper_reviews"] = None
+        enriched["serper_results_count"] = 0
 
     # ── Online presence score (0–4) ───────────────────────────────
     score = 0
@@ -177,7 +191,7 @@ def enrich_packet(packet, off_idx, fssai_idx, indiamart_idx, serper_idx):
         score += 1
     if enriched["fssai_verified"]:
         score += 1
-    if enriched["indiamart_wholesale_price"] is not None:
+    if enriched["indiamart_present"]:
         score += 1
     if enriched["serper_online_presence"]:
         score += 1
