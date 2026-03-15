@@ -1,0 +1,130 @@
+{
+  "scraped_at": "2026-03-15T19:53:16.457184",
+  "licenses_found": [
+    {
+      "fssai_license": "10012021000037",
+      "ph1_brand": "Balaji",
+      "ph1_products": [
+        "Crunchem"
+      ],
+      "ph1_packet_nums": [
+        17
+      ],
+      "api_accessible": false,
+      "company_name_verified": null,
+      "address_verified": null,
+      "license_type": null,
+      "valid_upto": null,
+      "api_error": "200 OK but JSON parse failed: Expecting value: line 1 column 1 (char 0)",
+      "note": "Manual lookup required at https://foscos.fssai.gov.in — search license 10012021000037"
+    },
+    {
+      "fssai_license": "10012021000039",
+      "ph1_brand": "Balaji",
+      "ph1_products": [
+        "Funne",
+        "Noodle Sticks",
+        "SNACK'EM PONGA",
+        "wheelos",
+        "Chataka Pataka",
+        "Gathiya",
+        "Ratlami Sev",
+        "Mung Dal",
+        "Aloo Sev",
+        "Masala Sev Murmura",
+        "CHATAKA PATAKA",
+        "Crunchem",
+        "Wafers"
+      ],
+      "ph1_packet_nums": [
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        18,
+        19
+      ],
+      "api_accessible": false,
+      "company_name_verified": null,
+      "address_verified": null,
+      "license_type": null,
+      "valid_upto": null,
+      "api_error": "200 OK but JSON parse failed: Expecting value: line 1 column 1 (char 0)",
+      "note": "Manual lookup required at https://foscos.fssai.gov.in — search license 10012021000039"
+    },
+    {
+      "fssai_license": "10019021004064",
+      "ph1_brand": "Balaji Wafers",
+      "ph1_products": [
+        "Amaize"
+      ],
+      "ph1_packet_nums": [
+        16
+      ],
+      "api_accessible": false,
+      "company_name_verified": null,
+      "address_verified": null,
+      "license_type": null,
+      "valid_upto": null,
+      "api_error": "200 OK but JSON parse failed: Expecting value: line 1 column 1 (char 0)",
+      "note": "Manual lookup required at https://foscos.fssai.gov.in — search license 10019021004064"
+    },
+    {
+      "fssai_license": "11516030000320",
+      "ph1_brand": "Surya",
+      "ph1_products": [
+        "Biryani Stick Snack Pellets",
+        "WONDER CAR"
+      ],
+      "ph1_packet_nums": [
+        1,
+        4
+      ],
+      "api_accessible": false,
+      "company_name_verified": null,
+      "address_verified": null,
+      "license_type": null,
+      "valid_upto": null,
+      "api_error": "200 OK but JSON parse failed: Expecting value: line 1 column 1 (char 0)",
+      "note": "Manual lookup required at https://foscos.fssai.gov.in — search license 11516030000320"
+    },
+    {
+      "fssai_license": "11518030000320",
+      "ph1_brand": "Surya",
+      "ph1_products": [
+        "Pasta",
+        "Ladki Bahin"
+      ],
+      "ph1_packet_nums": [
+        2,
+        3
+      ],
+      "api_accessible": false,
+      "company_name_verified": null,
+      "address_verified": null,
+      "license_type": null,
+      "valid_upto": null,
+      "api_error": "200 OK but JSON parse failed: Expecting value: line 1 column 1 (char 0)",
+      "note": "Manual lookup required at https://foscos.fssai.gov.in — search license 11518030000320"
+    }
+  ],
+  "unique_licenses": 5,
+  "auto_verified": 0,
+  "manual_lookup_required": [
+    "10012021000037",
+    "10012021000039",
+    "10019021004064",
+    "11516030000320",
+    "11518030000320"
+  ],
+  "fbo_search_accessible": true,
+  "fbo_search_status": "HTTP 404",
+  "manual_lookup_instructions": "Visit https://foscos.fssai.gov.in > FBO Search > enter license number in the search box"
+}
