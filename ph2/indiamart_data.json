@@ -1,0 +1,27 @@
+{
+  "scraped_at": "2026-03-15T14:31:20.148939+00:00",
+  "pages_attempted": 7,
+  "pages_success": 7,
+  "pages_blocked": 0,
+  "surya_found_on_indiamart": false,
+  "balaji_found_on_indiamart": false,
+  "suppliers": [],
+  "catalogue_products": [],
+  "blocked_urls": [],
+  "success_urls": [
+    "https://dir.indiamart.com/impcat/balaji-wafers.html",
+    "https://dir.indiamart.com/impcat/balaji-namkeen.html",
+    "https://dir.indiamart.com/impcat/balaji-chips.html",
+    "https://dir.indiamart.com/search.mp?ss=surya+gruh+udhyog+snacks",
+    "https://dir.indiamart.com/search.mp?ss=balaji+wafers+snacks",
+    "https://www.indiamart.com/surya-gruh-udhyog/",
+    "https://www.indiamart.com/balaji-wafers-pvt-ltd/"
+  ],
+  "notes": "Surya Gruh Udhyog (Nandurbar, Maharashtra) not found on IndiaMART — consistent with an offline-only regional micro-manufacturer with no B2B digital presence. This is a key finding: Surya competes purely through physical kirana distribution.",
+  "manual_check_urls": [
+    "https://www.indiamart.com/surya-gruh-udhyog/",
+    "https://dir.indiamart.com/search.mp?ss=surya+gruh+udhyog",
+    "https://www.indiamart.com/balaji-wafers-pvt-ltd/",
+    "https://dir.indiamart.com/impcat/balaji-wafers.html"
+  ]
+}
