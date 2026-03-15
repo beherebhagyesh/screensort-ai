@@ -1,27 +1,251 @@
 {
-  "scraped_at": "2026-03-15T14:31:20.148939+00:00",
-  "pages_attempted": 7,
-  "pages_success": 7,
+  "scraped_at": "2026-03-15T14:48:53.846751+00:00",
+  "method": "playwright_headless_chromium",
+  "pages_attempted": 5,
+  "pages_success": 5,
   "pages_blocked": 0,
-  "surya_found_on_indiamart": false,
-  "balaji_found_on_indiamart": false,
-  "suppliers": [],
-  "catalogue_products": [],
+  "surya_found_on_indiamart": true,
+  "balaji_company_info": {
+    "name": "Balaji Wafers Pvt. Ltd."
+  },
+  "suppliers": [
+    {
+      "raw_text": "Sharad Agency\nPune - Pune Shivtirtha Nagar\n\nPLOT NO.46 SHOP NO.1,NIRMITEE APARTMENT,PAUD ROAD,SHIVTIRTHA NAGAR, PUNE S No.120, Plot No.46, Shop No.1,411029,Pune, Pune Shivtirtha Nagar, Pune - 411038, Maharashtra\n\nGSTEmailMobile\nMember: 9 yrs\n★★★★★\n★★★★★\n3 (3)\n\n View Mobile Number (64% Response Rate)",
+      "source_url": "https://dir.indiamart.com/search.mp?ss=balaji+wafers+snacks",
+      "location": "Pune",
+      "company": "Sharad Agency"
+    },
+    {
+      "raw_text": "Chandani Kirana General Store\nRaigad - Taloja\n\nHouse No 626 Sec Pnl-1, Taloja, Raigad - 410206, Maharashtra ( 71 km from pune )\n\nGSTEmailMobile\nMember: 9 yrs\n\n View Mobile Number",
+      "source_url": "https://dir.indiamart.com/search.mp?ss=balaji+wafers+snacks",
+      "location": "Maharashtra",
+      "company": "Chandani Kirana General Store"
+    },
+    {
+      "raw_text": "Pooja Enterprises\nPune\n\nF 279 Market Yard Gultekdi Market Yard, Pune - 411037, Maharashtra\n\nGSTEmailMobile\nMember: 8 yrs\n★★★★★\n★★★★★\n4 (76)\n\n View Mobile Number (28% Response Rate)",
+      "source_url": "https://dir.indiamart.com/search.mp?ss=balaji+wafers+snacks",
+      "location": "Pune",
+      "company": "Pooja Enterprises"
+    },
+    {
+      "raw_text": "Chitale Sweet Home\nPune - Dhayari Phata\n\n1306 Khajina Vihir Road Gayatri Building Nr Khunya Murlidhar Mandir,Sadashiv Peth Pune Sadhashiv pet road, Dhayari Phata, Pune - 411030, Maharashtra\n\nGSTEmailMobile\nMember: 10 yrs\n\n View Mobile Number",
+      "source_url": "https://dir.indiamart.com/search.mp?ss=balaji+wafers+snacks",
+      "location": "Pune",
+      "company": "Chitale Sweet Home"
+    },
+    {
+      "raw_text": "Pravin Kirana Stores\nPune\n\n0,Indapur Road,Baramati,Pune, Pune - 413102, Maharashtra\n\nGSTEmailMobile\nMember: 3 yrs\n★★★★★\n★★★★★\n5 (1)\n\n View Mobile Number",
+      "source_url": "https://dir.indiamart.com/search.mp?ss=balaji+wafers+snacks",
+      "location": "Pune",
+      "company": "Pravin Kirana Stores"
+    },
+    {
+      "raw_text": "My Kingdom Foods Pvt. Ltd.\nRau - Deals in Pune\n\n403/5, Rau Pithampur By Pass, Village Sonway Tehsil Mhow, Rau - 453331, Dist. Indore, Madhya Pradesh ( 500 km from pune )\n\nGSTEmailMobile\nMember: 14 yrs\n★★★★★\n★★★★★\n4 (236)\nTrustSEAL\n\n View Mobile Number (70% Response Rate)",
+      "source_url": "https://dir.indiamart.com/search.mp?ss=balaji+wafers+snacks",
+      "location": "Pune",
+      "company": "My Kingdom Foods Pvt. Ltd."
+    },
+    {
+      "raw_text": "Ultrananotech Private Limited\nBengaluru - Deals in Pune\n\nB-205, Prime Blue Forest Appartment, Hoodi Garden Main Road,Rajapalya, Hoodi, Bengaluru - 560048, Karnataka ( 735 km from pune )\n\nGSTEmailMobile\nMember: 12 yrs\n★★★★★\n★★★★★\n4.5 (113)\nTrustSEAL\n\n View Mobile Number (88% Response Rate)",
+      "source_url": "https://dir.indiamart.com/search.mp?ss=balaji+wafers+snacks",
+      "location": "Pune",
+      "company": "Ultrananotech Private Limited"
+    },
+    {
+      "raw_text": "is a member of IndiaMART\n\nIndiaMART\nPune\nGet Best Price\nExporters\nSell\nHelp\n\nFind answers to your queries\n\nFor BuyingFor SellingShare your FeedbackRaise a ComplaintEmail us oncustomercare@indiamart.comCall us at 096-9696-9696Chat With usSeller Academy\nMessages\nSign In\nSign In\nNew to IndiaMART?\n\nJoin Now\n\nHomePost Your Requirement Verified Business BuyerProducts/Services DirectoryMy OrdersSettingsN",
+      "source_url": "https://dir.indiamart.com/search.mp?ss=balaji+wafers+snacks",
+      "price": "₹25",
+      "location": "India",
+      "company": "IndiaMART"
+    },
+    {
+      "raw_text": "Balaji Wafers\n\nAsk Price\n\nContact Supplier\nSharad Agency\nPune - Pune Shivtirtha Nagar\n\nPLOT NO.46 SHOP NO.1,NIRMITEE APARTMENT,PAUD ROAD,SHIVTIRTHA NAGAR, PUNE S No.120, Plot No.46, Shop No.1,411029,Pune, Pune Shivtirtha Nagar, Pune - 411038, Maharashtra\n\nGSTEmailMobile\nMember: 9 yrs\n★★★★★\n★★★★★\n3 (3)\n\n View Mobile Number (64% Response Rate)\n\nSnacks Wafers\n\nAsk Price\n\nContact Supplier\nChandani Kir",
+      "source_url": "https://dir.indiamart.com/search.mp?ss=balaji+wafers+snacks",
+      "price": "₹ 200",
+      "location": "Pune",
+      "company": "Balaji Wafers"
+    },
+    {
+      "raw_text": "Balaji Wafers\n\nAsk Price\n\nContact Supplier\nSharad Agency\nPune - Pune Shivtirtha Nagar\n\nPLOT NO.46 SHOP NO.1,NIRMITEE APARTMENT,PAUD ROAD,SHIVTIRTHA NAGAR, PUNE S No.120, Plot No.46, Shop No.1,411029,Pune, Pune Shivtirtha Nagar, Pune - 411038, Maharashtra\n\nGSTEmailMobile\nMember: 9 yrs\n★★★★★\n★★★★★\n3 (3)\n\n View Mobile Number (64% Response Rate)\n\nSnacks Wafers\n\nAsk Price\n\nContact Supplier\nChandani Kir",
+      "source_url": "https://dir.indiamart.com/search.mp?ss=balaji+wafers+snacks",
+      "price": "₹ 200",
+      "location": "Pune",
+      "company": "Balaji Wafers"
+    },
+    {
+      "raw_text": "Nilachal Automation And Technologies Private Limited\nPune - Sangamvadi\n\nD 13 Konark Park, 206 Dhole Patil Road, Sangamvadi, Pune - 411001, Maharashtra\n\nGSTEmailMobile\nMember: 4 yrs\n★★★★★\n★★★★★\n4.9 (7)\n\n View Mobile Number (83% Response Rate)",
+      "source_url": "https://dir.indiamart.com/search.mp?ss=surya+gruh+udhyog",
+      "location": "Pune",
+      "company": "Nilachal Automation And Technologies Private Limited"
+    },
+    {
+      "raw_text": "Narmada Automation Systems\nPune\n\nSR NO.112/1,SHOP NO.37, JAY GANESH SAMRAJYA, PUNE NASHIK RAOD,BHOSARI J-PAP, 142, J Block, Near Quality Circles, M. I. D. C.,411026,Pune, Pune - 411039, Maharashtra\n\nGSTEmailMobile\nMember: 13 yrs\n★★★★★\n★★★★★\n3 (1)\n\n View Mobile Number",
+      "source_url": "https://dir.indiamart.com/search.mp?ss=surya+gruh+udhyog",
+      "location": "Pune",
+      "company": "Narmada Automation Systems"
+    },
+    {
+      "raw_text": "Trimbak Sons\nPune - Hadapsar\n\n6, G-27, Wing G, Sasane Nagar Road, Hadapsar, Shree Swami Samarth Homeo Pharmacy For Homeopathy Medicine Retail And Wholesale Shop, Hadapsar, Pune - 411028, Maharashtra\n\nGSTEmailMobile\nMember: 8 yrs\n★★★★★\n★★★★★\n5 (1)\n\n View Mobile Number",
+      "source_url": "https://dir.indiamart.com/search.mp?ss=surya+gruh+udhyog",
+      "location": "Pune",
+      "company": "Trimbak Sons"
+    },
+    {
+      "raw_text": "Aaryaa Enterprises\nPune\n\nFlat No. 1, Matoshree Building At Post Nanded, Taluka Haveli, Sinhgad Road, Pune - 411041, Maharashtra\n\nGSTEmailMobile\nMember: 6 yrs\n★★★★★\n★★★★★\n4 (5)\nTrustSEAL\n\n View Mobile Number",
+      "source_url": "https://dir.indiamart.com/search.mp?ss=surya+gruh+udhyog",
+      "location": "Pune",
+      "company": "Aaryaa Enterprises"
+    },
+    {
+      "raw_text": "Ishwari Dies & Moulds\nPune - Chikhali\n\nGAT NO-158,,MAHALUNGE,CHAKAN No. 811, Dehu Alandi Road, Dehugaon,412114,Pune, Chikhali, Pune - 410501, Maharashtra\n\nGSTEmailMobile\nMember: 8 yrs\n★★★★★\n★★★★★\n4 (1)\n\n View Mobile Number",
+      "source_url": "https://dir.indiamart.com/search.mp?ss=surya+gruh+udhyog",
+      "location": "Pune",
+      "company": "Ishwari Dies & Moulds"
+    },
+    {
+      "raw_text": "is a member of IndiaMART\n\nIndiaMART\nPune\nGet Best Price\nExporters\nSell\nHelp\n\nFind answers to your queries\n\nFor BuyingFor SellingShare your FeedbackRaise a ComplaintEmail us oncustomercare@indiamart.comCall us at 096-9696-9696Chat With usSeller Academy\nMessages\nSign In\nSign In\nNew to IndiaMART?\n\nJoin Now\n\nHomePost Your Requirement Verified Business BuyerProducts/Services DirectoryMy OrdersSettingsN",
+      "source_url": "https://dir.indiamart.com/search.mp?ss=surya+gruh+udhyog",
+      "price": "₹1,20,000",
+      "location": "India",
+      "company": "IndiaMART"
+    },
+    {
+      "raw_text": "Watch Video\n+ 3 photos\nSpices Packing Machine\n\n₹ 6,50,000\n\nContact Supplier\nNilachal Automation And Technologies Private Limited\nPune - Sangamvadi\n\nD 13 Konark Park, 206 Dhole Patil Road, Sangamvadi, Pune - 411001, Maharashtra\n\nGSTEmailMobile\nMember: 4 yrs\n★★★★★\n★★★★★\n4.9 (7)\n\n View Mobile Number (83% Response Rate)\n\n+ 1 photos\nSpices Packaging Machine\n\n₹ 3,50,000\n\nContact Supplier\nNarmada Automat",
+      "source_url": "https://dir.indiamart.com/search.mp?ss=surya+gruh+udhyog",
+      "price": "₹ 6,50,000",
+      "location": "Pune",
+      "company": "Spices Packing Machine"
+    },
+    {
+      "raw_text": "Watch Video\n+ 3 photos\nSpices Packing Machine\n\n₹ 6,50,000\n\nContact Supplier\nNilachal Automation And Technologies Private Limited\nPune - Sangamvadi\n\nD 13 Konark Park, 206 Dhole Patil Road, Sangamvadi, Pune - 411001, Maharashtra\n\nGSTEmailMobile\nMember: 4 yrs\n★★★★★\n★★★★★\n4.9 (7)\n\n View Mobile Number (83% Response Rate)\n\n+ 1 photos\nSpices Packaging Machine\n\n₹ 3,50,000\n\nContact Supplier\nNarmada Automat",
+      "source_url": "https://dir.indiamart.com/search.mp?ss=surya+gruh+udhyog",
+      "price": "₹ 6,50,000",
+      "location": "Pune",
+      "company": "Spices Packing Machine"
+    }
+  ],
+  "catalogue_products": [
+    {
+      "name": "MELTIES Rectangular WAFER STRAWBERRY, Packaging Type: Jar, 40 Pcs",
+      "url": "https://www.indiamart.com/proddetail/wafer-strawberry-26080767712.html?pos=3&kwd=balaji wafers snacks&tags=rk:B|plc:1|dt:0|db:01|prc:1|dtp:p||sv:VGP|rsf:gd|prv:200|ri:VGP_B_0_P|em:0-|-res:RC3|ktp:N0|stype:attr=1-br|mtp:S|wc:3|lcf:3|cq:pune|qr_nm:gl-gd|cs:18890|com-cf:nl|ptrs:na|mc:122821|cat:5|qry_typ:P|lang:en|tyr:1|qrd:260315|mrd:260315|prdt:260315|msf:ls|pfen:1|gli:U0G0I0|gc:Pune|ic:Pune|scw:1|emt:1|v=4|crs=glb|r=4"
+    },
+    {
+      "name": "Cheese Waffer, Packaging Type: Packet",
+      "url": "https://www.indiamart.com/proddetail/waffer-2850921001097.html?pos=4&kwd=balaji wafers snacks&tags=rk:C|plc:1|dt:0|db:01||dtp:p||sv:VGP|rsf:gd||ri:VGP_C_0_P|em:0-|-res:RC3|ktp:N0|stype:attr=1-br|mtp:S|wc:3|lcf:3|cq:pune|qr_nm:gl-gd|cs:18890|com-cf:nl|ptrs:na|mc:122821|cat:5|qry_typ:P|lang:en|tyr:1|qrd:260315|mrd:260315|prdt:260315|msf:ls|pfen:1|gli:U0G0I0|gc:Pune|ic:Pune|scw:1|emt:1|v=4|crs=glb"
+    },
+    {
+      "name": "Wafers Rectangular Livinda JEE PAPA LONG WAFER JAR",
+      "url": "https://www.indiamart.com/proddetail/livinda-jee-papa-long-wafer-jar-23068640797.html?pos=6&kwd=balaji wafers snacks&tags=rk:A|plc:1|dt:500|db:11|prc:1|dtp:p|pfs:1|sv:T|rsf:gl|prv:5|ri:T_A_G250_P|em:0-|-res:RC3|ktp:N0|stype:attr=1-br|mtp:S|wc:3|lcf:3|cq:pune|qr_nm:gl-gd|cs:18890|com-cf:nl|ptrs:na|mc:122821|cat:5|qry_typ:P|lang:en|tyr:1|qrd:260315|mrd:260315|prdt:260315|msf:ls|pfen:1|gli:U0G0I0|gc:Pune|ic:Pune|scw:1|emt:1|v=4|crs=glb|r=4"
+    },
+    {
+      "name": "GaN single crystal substrate/wafer",
+      "url": "https://www.indiamart.com/proddetail/gan-single-crystal-substrate-wafer-2850915983697.html?pos=7&kwd=balaji wafers snacks&tags=rk:A|plc:1|dt:735|db:15|prc:1|dtp:p|pfs:1|sv:T|rsf:gl|prv:5000|ri:T_A_G250_P|em:0-|-res:RC3|ktp:N0|stype:attr=1-br|mtp:S|wc:3|lcf:3|cq:pune|qr_nm:gl-gd|cs:18890|com-cf:nl|ptrs:na|mc:122821|cat:5|qry_typ:P|lang:en|tyr:1|qrd:260315|mrd:260315|prdt:260315|msf:ls|pfen:1|gli:U0G0I0|gc:Pune|ic:Pune|scw:1|emt:1|v=4|crs=glb|r=4"
+    },
+    {
+      "name": "Balaji Wafers Crunchem Simply Saled Potato Chips",
+      "url": "https://www.indiamart.com/proddetail/balaji-wafers-crunchem-simply-saled-potato-chips-2855553610462.html?pos=8&kwd=balaji wafers snacks&tags=rk:C||dt:120|db:03||dtp:p||sv:VGP|rsf:gd||ri:VGP_C_250_NP|em:0-|-res:RC3|ktp:N0|stype:attr=1-br|mtp:S|wc:3|lcf:3|cq:pune|qr_nm:gl-gd|cs:18890|com-cf:nl|ptrs:na|mc:122821|cat:5|qry_typ:P|lang:en|tyr:1|qrd:260315|mrd:260315|prdt:260315|msf:ls|pfen:1|gli:U0G0I0|gc:Pune|ic:Pune|scw:1|emt:1|v=4|crs=glb|r=2"
+    },
+    {
+      "name": "Batata Balaji Wafers",
+      "url": "https://www.indiamart.com/proddetail/batata-balaji-wafers-27527393548.html?pos=9&kwd=balaji wafers snacks&tags=rk:O||dt:37|db:01|prc:1|dtp:p||sv:VGP|rsf:gd|prv:50|ri:VGP_O_50_NP|em:1-|-res:RC3|ktp:N0|stype:attr=1-br|mtp:S|wc:3|lcf:3|cq:pune|qr_nm:gl-gd|cs:18890|com-cf:nl|ptrs:na|mc:122821|cat:5|qry_typ:P|lang:en|tyr:1|qrd:260315|mrd:260315|prdt:260315|msf:ls|pfen:1|gli:U0G0I0|gc:Pune|ic:Pune|scw:1|emt:1|v=4|crs=glb|r=2"
+    },
+    {
+      "name": "iOS App",
+      "url": "https://itunes.apple.com/us/app/indiamart-buy-sell-products/id668561641?mt=8"
+    },
+    {
+      "name": "Products You Buy",
+      "url": "//buyer.indiamart.com/buyertools/myproductbuy/?modid=DIR"
+    },
+    {
+      "name": "Spices Packing Machine",
+      "url": "https://www.indiamart.com/proddetail/spices-packing-machine-2853066901097.html?pos=1&kwd=surya gruh udhyog&tags=rk:A|plc:1|dt:0|db:01|prc:1|dtp:p|pfs:1|sv:M|rsf:localhgmct|prv:650000|ri:M_A_0_P|em:0-|-res:RC1-R5|ktp:N0|mtp:S|wc:3|lcf:3|cq:pune|qr_nm:localhgmct-gl-gd|cs:19077|com-cf:lw|ptrs:na|mc:141597|cat:563|qry_typ:P|msc:3|lang:en|tyr:1|qrd:260315|mrd:260315|prdt:260315|msf:hs|pfen:1|gli:U0G0I0|gc:Pune|ic:Pune|scw:1|emt:0|v=4|crs=xnh-city|r=4"
+    },
+    {
+      "name": "Spices Packaging Machine",
+      "url": "https://www.indiamart.com/proddetail/spices-packaging-machine-13305195333.html?pos=2&kwd=surya gruh udhyog&tags=rk:C|plc:1|dt:0|db:01|prc:1|dtp:p||sv:VGP|rsf:localhgmct|prv:350000|ri:VGP_C_0_P|em:0-|-res:RC1-R5|ktp:N0|mtp:S|wc:3|lcf:3|cq:pune|qr_nm:localhgmct-gl-gd|cs:19077|com-cf:lw|ptrs:na|mc:141597|cat:563|qry_typ:P|msc:3|lang:en|tyr:1|qrd:260315|mrd:260315|prdt:260315|msf:hs|pfen:1|gli:U0G0I0|gc:Pune|ic:Pune|scw:1|emt:0|v=4|crs=xnh-city|r=3"
+    },
+    {
+      "name": "Pouch Packing Filling Machine, For Industrial",
+      "url": "https://www.indiamart.com/proddetail/pouch-packing-filling-machine-21650740912.html?pos=4&kwd=surya gruh udhyog&tags=rk:C|plc:1|dt:0|db:01|prc:1|dtp:p||sv:VGP|rsf:localhgmct|prv:255000|ri:VGP_C_0_P|em:0-|-res:RC1-R5|ktp:N0|mtp:S|wc:3|lcf:3|cq:pune|qr_nm:localhgmct-gl-gd|cs:19077|com-cf:lw|ptrs:na|mc:141597|cat:563|qry_typ:P|msc:3|lang:en|tyr:1|qrd:260315|mrd:260315|prdt:260315|msf:hs|pfen:1|gli:U0G0I0|gc:Pune|ic:Pune|scw:1|emt:0|v=4|crs=xnh-city|r=4"
+    },
+    {
+      "name": "Spice Pouch Packing Machine",
+      "url": "https://www.indiamart.com/proddetail/spice-pouch-packing-machine-17089632048.html?pos=5&kwd=surya gruh udhyog&tags=rk:C|plc:1|dt:0|db:01|prc:1|dtp:p||sv:VGP|rsf:localhgmct|prv:250000|ri:VGP_C_0_P|em:0-|-res:RC1-R5|ktp:N0|mtp:S|wc:3|lcf:3|cq:pune|qr_nm:localhgmct-gl-gd|cs:19077|com-cf:lw|ptrs:na|mc:141597|cat:563|qry_typ:P|msc:3|lang:en|tyr:1|qrd:260315|mrd:260315|prdt:260315|msf:hs|pfen:1|gli:U0G0I0|gc:Pune|ic:Pune|scw:1|emt:0|v=4|crs=xnh-city|r=4"
+    }
+  ],
+  "price_mentions": [
+    "₹ 2,55,000",
+    "₹ 5,000",
+    "₹ 3,50,000",
+    "₹ 200",
+    "₹1,20,001 - ₹2,00,000",
+    "Below ₹1,20,000",
+    "₹ 6,50,000",
+    "Above ₹3,50,001",
+    "₹81 - ₹150",
+    "Annual turnover ₹5 Cr+",
+    "₹2,00,001 - ₹3,50,000",
+    "Above ₹151",
+    "₹ 2,50,000",
+    "Below ₹25",
+    "₹ 5",
+    "₹ 50",
+    "₹26 - ₹80"
+  ],
   "blocked_urls": [],
   "success_urls": [
-    "https://dir.indiamart.com/impcat/balaji-wafers.html",
-    "https://dir.indiamart.com/impcat/balaji-namkeen.html",
-    "https://dir.indiamart.com/impcat/balaji-chips.html",
-    "https://dir.indiamart.com/search.mp?ss=surya+gruh+udhyog+snacks",
-    "https://dir.indiamart.com/search.mp?ss=balaji+wafers+snacks",
-    "https://www.indiamart.com/surya-gruh-udhyog/",
-    "https://www.indiamart.com/balaji-wafers-pvt-ltd/"
-  ],
-  "notes": "Surya Gruh Udhyog (Nandurbar, Maharashtra) not found on IndiaMART — consistent with an offline-only regional micro-manufacturer with no B2B digital presence. This is a key finding: Surya competes purely through physical kirana distribution.",
-  "manual_check_urls": [
-    "https://www.indiamart.com/surya-gruh-udhyog/",
-    "https://dir.indiamart.com/search.mp?ss=surya+gruh+udhyog",
     "https://www.indiamart.com/balaji-wafers-pvt-ltd/",
-    "https://dir.indiamart.com/impcat/balaji-wafers.html"
-  ]
+    "https://dir.indiamart.com/impcat/balaji-wafers.html",
+    "https://dir.indiamart.com/search.mp?ss=balaji+wafers+snacks",
+    "https://dir.indiamart.com/search.mp?ss=surya+gruh+udhyog",
+    "https://www.indiamart.com/surya-gruh-udhyog/"
+  ],
+  "raw_page_data": {
+    "balaji-company": {
+      "page_title": "Balaji Family Namkeen And Wafer Products Manufacturer | Balaji Wafers Pvt. Ltd., Rajkot",
+      "products_count": 0,
+      "suppliers_count": 0,
+      "prices_found": 0,
+      "company_info": {
+        "name": "Balaji Wafers Pvt. Ltd."
+      },
+      "error": null
+    },
+    "balaji-wafers-dir": {
+      "page_title": "Balaji Wafers - Latest Price, Dealers & Retailers in India",
+      "products_count": 0,
+      "suppliers_count": 0,
+      "prices_found": 0,
+      "company_info": {},
+      "error": null
+    },
+    "balaji-search": {
+      "page_title": "balaji wafers snacks - Indiamart",
+      "products_count": 8,
+      "suppliers_count": 10,
+      "prices_found": 9,
+      "company_info": {},
+      "error": null
+    },
+    "surya-search": {
+      "page_title": "surya gruh udhyog - Indiamart",
+      "products_count": 6,
+      "suppliers_count": 8,
+      "prices_found": 9,
+      "company_info": {},
+      "error": null
+    },
+    "surya-company": {
+      "page_title": "IndiaMART: Page not found",
+      "products_count": 0,
+      "suppliers_count": 0,
+      "prices_found": 0,
+      "company_info": {
+        "name": ""
+      },
+      "error": null
+    }
+  },
+  "notes": "Surya found — see catalogue_products."
 }
