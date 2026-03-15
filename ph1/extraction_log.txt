@@ -1,0 +1,47 @@
+Total images: 84
+Grouped into 21 packets | Model: gemini-3.1-flash-lite-preview
+
+[1/21] IMG20260312212753.jpg
+  Surya | Stick / Pasta | Chatpata Masala / Biryani | Rs5 | Noneg
+[2/21] IMG20260312212932.jpg
+  Surya | Pasta | Masala/Spicy | Rs5.0 | Noneg
+[3/21] IMG20260312213059.jpg
+  Surya | WONDER CAR | Chilli | Rs5 | Noneg
+[4/21] IMG20260312213208.jpg
+  Balaji Wafers | Funne | Spicy Punch | Rs5.0 | 24g
+[5/21] IMG20260312213345.jpg
+  Balaji Wafers | Noodle Sticks | Masala | Rs5 | 24g
+[6/21] IMG20260312213437.jpg
+  Balaji Wafers | Noodle Sticks | Masala | Rs5 | 24g
+[7/21] IMG20260312214019.jpg
+  BALAJI WAFERS | SNACK'EM PONGA | Plain | Rs5.0 | 24g
+[8/21] IMG20260312214149.jpg
+  BALAJI | wheelos | Masala | Rs5 | 20g
+[9/21] IMG20260312214237.jpg
+  Balaji | Chataka Pataka | Masala Masti | Rs5.0 | 24g
+[10/21] IMG20260312214345.jpg
+  Haldiram's | Namkeen | None | Rs5.0 | Noneg
+[11/21] IMG20260312214414.jpg
+  BALAJI | Gathiya | None | Rs5 | 24g
+[12/21] IMG20260312214503.jpg
+  BALAJI WAFERS | Ratlami Sev | Ratlami Sev | Rs5.0 | 24g
+[13/21] IMG20260312214543.jpg
+  Balaji Wafers | Mung Dal | Namkeen | Rs5.0 | 24g
+[14/21] IMG20260312214649.jpg
+  BALAJI WAFERS | Mung Dal | None | Rs5 | 24g
+[15/21] IMG20260312214714.jpg
+  Balaji | Aloo Sev | Masala | Rs5.0 | 24g
+[16/21] IMG20260312214828.jpg
+  BALAJI | BALAJI WAFERS | NAMKEEN | Rs5.0 | 24g
+[17/21] IMG20260312214852.jpg
+  BALAJI | CHATAKA PATAKA | Tangy Tomato | Rs5 | 24g
+[18/21] IMG20260312214923.jpg
+  Balaji Wafers | Amaize | Cheese Chilli | Rs5.0 | 21g
+[19/21] IMG20260312215005.jpg
+  Balaji | Crunchiem | Simply Salted | Rs5.0 | 20g
+[20/21] IMG20260312215036.jpg
+  Balaji Wafers | Crunchem | Tomato Twist | Rs5 | 16g
+[21/21] IMG20260312215107.jpg
+  Balaji | Wafers | Masala | Rs5.0 | 16g
+
+Done. 21 packets -> packet_data.json

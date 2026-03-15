@@ -12,3 +12,5 @@ storage/
 server_debug.log
 sort_log.txt
 screenshots.db
+ph2/cache/
+*.xlsx
