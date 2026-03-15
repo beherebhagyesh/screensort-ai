@@ -1,0 +1,28 @@
+{
+  "status": "awaiting_api_key",
+  "instructions": "1. Go to https://serper.dev  2. Sign up free (2500 searches/month)  3. Copy API key  4. Save to ph2/serper_key.txt OR set env var SERPER_API_KEY",
+  "queries_prepared": [
+    "surya biryani stick snack pellets chatpata masala",
+    "surya pasta masala/spicy",
+    "surya ladki bahin masala",
+    "surya wonder car chilli",
+    "balaji funne spicy punch",
+    "balaji noodle sticks masala",
+    "balaji snack'em ponga plain",
+    "balaji wheelos masala",
+    "balaji chataka pataka masala masti",
+    "balaji gathiya",
+    "balaji ratlami sev",
+    "balaji mung dal",
+    "balaji aloo sev masala",
+    "balaji masala sev murmura",
+    "balaji chataka pataka tangy tomato",
+    "balaji amaize cheese chilli",
+    "balaji crunchem simply salted",
+    "balaji crunchem tomato twist",
+    "balaji wafers masala",
+    "balaji wafers snacks india",
+    "surya gruh udhyog snacks",
+    "balaji namkeen 5 rupees"
+  ]
+}
