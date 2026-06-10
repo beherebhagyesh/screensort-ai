@@ -476,9 +476,6 @@ def save_image_data(filename, b64_data):
     except Exception as e:
         print(json.dumps({"error": str(e)}))
 
-    except Exception as e:
-        print(json.dumps({"error": str(e)}))
-
 def generate_kb():
     conn = get_db()
     c = conn.cursor()
