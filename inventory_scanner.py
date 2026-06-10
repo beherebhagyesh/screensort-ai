@@ -144,7 +144,7 @@ def get_sorted_images(directory, limit):
         
     return images
 
-def group_images(images, time_threshold_minutes=2):
+def group_images(images, time_threshold_minutes=2, disable_ai_grouping=False):
     groups = []
     current_group = []
     last_mtime = 0
@@ -161,7 +161,7 @@ def group_images(images, time_threshold_minutes=2):
             logging.info(f"Time gap exceeded ({mtime - last_mtime:.1f}s). Starting new group.")
 
         is_front = False
-        if not time_gap_exceeded:
+        if not time_gap_exceeded and not disable_ai_grouping:
             is_front = is_front_of_packet(filepath)
             if is_front:
                 logging.info(f"AI detected 'Front' image. Starting new group.")
@@ -253,6 +253,7 @@ def main():
     parser.add_argument("--output", type=str, default="inventory_output.csv", help="Output CSV file name")
     parser.add_argument("--limit", type=int, default=100, help="Number of recent images to process (0 for all)")
     parser.add_argument("--time-gap", type=float, default=2.0, help="Time gap threshold in minutes to start a new group")
+    parser.add_argument("--fast-grouping", action='store_true', help="Skip AI grouping and rely only on time-gap")
     args = parser.parse_args()
 
     logging.info(f"Scanning directory: {args.dir}")
@@ -267,7 +268,7 @@ def main():
     # Lazy load LLM to ensure it works before starting long process
     get_llm()
 
-    groups = group_images(images, time_threshold_minutes=args.time_gap)
+    groups = group_images(images, time_threshold_minutes=args.time_gap, disable_ai_grouping=args.fast_grouping)
     results = process_groups(groups)
     write_csv(results, args.output)
 
