@@ -7,8 +7,8 @@ SCRIPT="sort_screenshots.py"
 if pgrep -f "python3 .*$SCRIPT" > /dev/null; then
     echo "Sorting service is already running."
 else
-    echo "Starting sorting service..."
+    echo "Starting sorting service with args: $@"
     cd "$PROJECT_DIR"
-    nohup python3 "$SCRIPT" > "$LOG_FILE" 2>&1 &
+    nohup python3 "$SCRIPT" "$@" > "$LOG_FILE" 2>&1 &
     echo "Service started. Logs at $LOG_FILE"
 fi
