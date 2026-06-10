@@ -28,8 +28,17 @@ def seed():
         video_frames_analyzed INTEGER,
         video_objects TEXT,
         ocr_method TEXT,
-        ai_extracted_text TEXT
+        ai_extracted_text TEXT,
+        phash TEXT
     )''')
+
+    # Add missing columns if they don't exist (migration for seed script)
+    migrations = [('phash', 'TEXT')]
+    for col, coltype in migrations:
+        try:
+            c.execute(f'ALTER TABLE screenshots ADD COLUMN {col} {coltype}')
+        except sqlite3.OperationalError:
+            pass
 
     # Check if empty
     c.execute("SELECT count(*) FROM screenshots")
@@ -56,16 +65,19 @@ def seed():
         is_video = 1 if random.random() > 0.9 else 0
         lang = random.choice(languages) if random.random() > 0.7 else None
         
+        # Mock phash (64-bit hex)
+        phash = hex(random.getrandbits(64))[2:] if not is_video else None
+        
         filename = f"screenshot_{created_at}_{i}.jpg"
         
         c.execute('''INSERT INTO screenshots
             (filename, path, category, text, amount, created_at, processed_at, 
-             ai_category, ai_summary, detected_language, is_video)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
+             ai_category, ai_summary, detected_language, is_video, phash)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
             (filename, f"/sdcard/Pictures/Screenshots/{category}/{filename}", 
              category, "Mock text content for demo purposes...", amount, 
              created_at, created_at + 1000, 
-             category, f"A mock screenshot of {category}", lang, is_video)
+             category, f"A mock screenshot of {category}", lang, is_video, phash)
         )
 
     conn.commit()
